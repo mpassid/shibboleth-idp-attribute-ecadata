@@ -3,6 +3,10 @@ language: java
 jdk:
   - openjdk7
 
+before_install:
+  - git clone https://github.com/mpassid/shibboleth-idp-authn-shibsp
+  - mvn install -f shibboleth-idp-authn-shibsp/pom.xml
+
 script:
   mvn clean package
 
