@@ -38,6 +38,24 @@ THE SOFTWARE.
         </annotation>
         <complexContent>
             <extension base="resolver:BaseDataConnectorType">
+                <sequence>
+                    <element name="DirectIdpAttributes" minOccurs="0" maxOccurs="unbounded">
+                        <complexType>
+                            <sequence>
+                                <element name="Mapping" maxOccurs="unbounded">
+                                    <complexType>
+                                    <attribute name="attributeName" type="string" use="required" />
+                                    <attribute name="principalName" type="string" use="required" />
+                                    </complexType>
+                                </element>
+                            </sequence>
+                             <attribute name="idpId" type="string" use="required"/>
+                             <attribute name="municipality" type="string" use="optional"/>
+                             <attribute name="municipalityCode" type="string" use="optional"/>
+                        </complexType>
+                    </element>
+                </sequence>
+
                 <attribute name="endpointUrl" type="string" use="required">
                     <annotation>
                         <documentation>

@@ -23,6 +23,10 @@
 
 package fi.mpass.shibboleth.attribute.resolver.spring.dc;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import javax.xml.namespace.QName;
 
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -32,6 +36,7 @@ import org.w3c.dom.Element;
 import fi.mpass.shibboleth.attribute.resolver.dc.impl.RestDataConnector;
 import net.shibboleth.idp.attribute.resolver.spring.dc.impl.AbstractDataConnectorParser;
 import net.shibboleth.utilities.java.support.primitive.StringSupport;
+import net.shibboleth.utilities.java.support.xml.ElementSupport;
 
 /**
  * A configuration parser for ECA Auth Data API data connector.
@@ -41,6 +46,13 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
     /** Schema name. */
     public static final QName SCHEMA_NAME = new QName(RestDataConnectorNamespaceHandler.NAMESPACE, "RestDataConnector");
 
+    /** Element name for DirectIdpAttributes. */
+    public static final QName DIRECT_IDP_ATTRIBUTES_NAME = new QName(RestDataConnectorNamespaceHandler.NAMESPACE, "DirectIdpAttributes");
+
+    /** Element name for Mapping. */
+    public static final QName MAPPING_NAME = new QName(RestDataConnectorNamespaceHandler.NAMESPACE, "Mapping");
+
+    
     /** {@inheritDoc} */
     protected Class<RestDataConnector> getNativeBeanClass() {
         return RestDataConnector.class;
@@ -66,5 +78,32 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
         }
         String nameApiBaseUrl = element.getAttributeNS(null, "nameApiBaseUrl");
         builder.addPropertyValue("nameApiBaseUrl", nameApiBaseUrl);
+        final List<Element> directIdpAttributes = ElementSupport.getChildElements(element, DIRECT_IDP_ATTRIBUTES_NAME);
+        if (directIdpAttributes != null) {
+            final Map<String, Map<String, String>> principalMappings = new HashMap<>();
+            for (final Element directIdpAttribute : directIdpAttributes) {
+                final String idp = directIdpAttribute.getAttributeNS(null, "idpId");
+                final List<Element> mappings = ElementSupport.getChildElements(directIdpAttribute, MAPPING_NAME);
+                if (mappings != null) {
+                    final Map<String, String> idpMappings = new HashMap<>();
+                    for (final Element mapping : mappings) {
+                        final String attributeName = mapping.getAttributeNS(null, "attributeName");
+                        final String principalName = mapping.getAttributeNS(null, "principalName");
+                        idpMappings.put(attributeName, principalName);
+                    }
+                    final String municipality = directIdpAttribute.getAttributeNS(null, "municipality");
+                    if (municipality != null) {
+                        idpMappings.put(RestDataConnector.ATTR_ID_MUNICIPALITIES, municipality);
+                    }
+                    final String municipalityCode = directIdpAttribute.getAttributeNS(null, "municipalityCode");
+                    if (municipalityCode != null) {
+                        idpMappings.put(RestDataConnector.ATTR_ID_MUNICIPALITY_CODE, municipalityCode);
+                    }
+                    principalMappings.put(idp, idpMappings);
+                    builder.addPropertyValue("principalMappings", principalMappings);
+                }
+            }
+            
+        }
     }
 }
