@@ -81,8 +81,23 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
         final List<Element> directIdpAttributes = ElementSupport.getChildElements(element, DIRECT_IDP_ATTRIBUTES_NAME);
         if (directIdpAttributes != null) {
             final Map<String, Map<String, String>> principalMappings = new HashMap<>();
+            final Map<String, Map<String, String>> staticValues = new HashMap<>();
             for (final Element directIdpAttribute : directIdpAttributes) {
+                final Map<String, String> valueMappings = new HashMap<>();
                 final String idp = directIdpAttribute.getAttributeNS(null, "idpId");
+                final String municipality = directIdpAttribute.getAttributeNS(null, "municipality");
+
+                if (municipality != null) {
+                    valueMappings.put(RestDataConnector.ATTR_ID_MUNICIPALITIES, municipality);
+                }
+                final String municipalityCode = directIdpAttribute.getAttributeNS(null, "municipalityCode");
+                if (municipalityCode != null) {
+                    valueMappings.put(RestDataConnector.ATTR_ID_MUNICIPALITY_CODE, municipalityCode);
+                }
+                if (!valueMappings.isEmpty()) {
+                    staticValues.put(idp, valueMappings);
+                }
+
                 final List<Element> mappings = ElementSupport.getChildElements(directIdpAttribute, MAPPING_NAME);
                 if (mappings != null) {
                     final Map<String, String> idpMappings = new HashMap<>();
@@ -91,19 +106,11 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
                         final String principalName = mapping.getAttributeNS(null, "principalName");
                         idpMappings.put(attributeName, principalName);
                     }
-                    final String municipality = directIdpAttribute.getAttributeNS(null, "municipality");
-                    if (municipality != null) {
-                        idpMappings.put(RestDataConnector.ATTR_ID_MUNICIPALITIES, municipality);
-                    }
-                    final String municipalityCode = directIdpAttribute.getAttributeNS(null, "municipalityCode");
-                    if (municipalityCode != null) {
-                        idpMappings.put(RestDataConnector.ATTR_ID_MUNICIPALITY_CODE, municipalityCode);
-                    }
                     principalMappings.put(idp, idpMappings);
-                    builder.addPropertyValue("principalMappings", principalMappings);
                 }
             }
-            
+            builder.addPropertyValue("principalMappings", principalMappings);            
+            builder.addPropertyValue("staticValues", staticValues);            
         }
     }
 }
