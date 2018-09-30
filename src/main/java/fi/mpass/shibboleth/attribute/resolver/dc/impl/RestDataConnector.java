@@ -27,14 +27,20 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.security.auth.Subject;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -55,6 +61,8 @@ import com.google.gson.JsonSyntaxException;
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.AttributesDTO;
+import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
+import fi.mpass.shibboleth.authn.principal.impl.KeyValuePrincipal;
 import net.shibboleth.idp.attribute.IdPAttribute;
 import net.shibboleth.idp.attribute.IdPAttributeValue;
 import net.shibboleth.idp.attribute.StringAttributeValue;
@@ -63,6 +71,7 @@ import net.shibboleth.idp.attribute.resolver.ResolutionException;
 import net.shibboleth.idp.attribute.resolver.ResolvedAttributeDefinition;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolutionContext;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolverWorkContext;
+import net.shibboleth.idp.authn.context.AuthenticationContext;
 import net.shibboleth.utilities.java.support.annotation.constraint.NotEmpty;
 import net.shibboleth.utilities.java.support.httpclient.HttpClientBuilder;
 import net.shibboleth.utilities.java.support.logic.Constraint;
@@ -112,6 +121,12 @@ public class RestDataConnector extends AbstractDataConnector {
     /** The attribute id prefix for UserDTO/attribute keys. */
     public static final String ATTR_PREFIX = "attr_";
     
+    /** The attribute id for the legacy ID (only used with direct IdP attributes). */
+    public static final String ATTR_ID_LEGACY_ID = "legacyId";
+    
+    /** The attribute id for the municipality code (only used with direct IdP attributes). */
+    public static final String ATTR_ID_MUNICIPALITY_CODE = "municipalityCode";
+    
     /** The default base URL for fetching school info. */
     public static final String DEFAULT_BASE_URL_SCHOOL_INFO = 
             "https://virkailija.opintopolku.fi/koodisto-service/rest/codeelement/oppilaitosnumero_";
@@ -139,6 +154,15 @@ public class RestDataConnector extends AbstractDataConnector {
 
     /** The {@link HttpClientBuilder} used for constructing HTTP clients. */
     private HttpClientBuilder httpClientBuilder;
+    
+    /**
+     * The map for constructing attributes directly from session {@link Principal}s. The key is the 
+     * id and the value contains attribute to principal mappings.
+     */
+    private Map<String, Map<String, String>> principalMappings;
+    
+    /** The map for static attribute values for an IDP. */
+    private Map<String, Map<String, String>> staticValues;
 
     /**
      * Constructor.
@@ -158,6 +182,27 @@ public class RestDataConnector extends AbstractDataConnector {
         } else {
             httpClientBuilder = clientBuilder;
         }
+        principalMappings = Collections.emptyMap();
+        staticValues = Collections.emptyMap();
+    }
+    
+    /**
+     * Set the map for constructing attributes directly from session {@link Principal}s. The key is the 
+     * id and the value contains attribute to principal mappings.
+     * 
+     * @param mappings What to set.
+     */
+    public void setPrincipalMappings(final Map<String, Map<String, String>> mappings) {
+        principalMappings = Constraint.isNotNull(mappings, "The map for attributes to principals cannot be null");
+    }
+    
+    /**
+     * Set the map for static attribute values for an IDP.
+     * 
+     * @param values What to set.
+     */
+    public void setStaticValues(final Map<String, Map<String, String>> values) {
+        staticValues = Constraint.isNotNull(values, "The map for static values cannot be null");
     }
 
     /** {@inheritDoc} */
@@ -165,7 +210,152 @@ public class RestDataConnector extends AbstractDataConnector {
             @Nonnull final AttributeResolutionContext attributeResolutionContext,
             @Nonnull final AttributeResolverWorkContext attributeResolverWorkContext) throws ResolutionException {
         final Map<String, IdPAttribute> attributes = new HashMap<>();
+        
+        final String idpIdValue =
+                collectSingleAttributeValue(attributeResolverWorkContext.getResolvedIdPAttributeDefinitions(), idpId);
+        if (StringSupport.trimOrNull(idpIdValue) == null) {
+            log.error("Could not resolve idpId value");
+            throw new ResolutionException("Could not resolve idpId value");
+        }
 
+        final UserDTO ecaUser;
+        if (principalMappings.keySet().contains(idpIdValue)) {
+            log.debug("The direct attribute mapping settings found for IdP {}", idpIdValue);
+            ecaUser = getUserDetailsFromAttributes(idpIdValue, attributeResolutionContext);
+        } else {
+            log.debug("The direct attribute mapping settings were not found for IdP {}", idpIdValue);
+            ecaUser = getUserDetailsViaRest(idpIdValue, attributeResolverWorkContext);
+        }
+        
+        if (ecaUser != null) {
+            populateAttributes(attributes, ecaUser);
+            log.debug("{} attributes are now populated", attributes.size());
+        } else {
+            log.warn("Could not populate the attributes");
+        }
+        
+        return attributes;
+    }
+    
+    protected UserDTO getUserDetailsFromAttributes(final String idpIdValue, @Nonnull final AttributeResolutionContext attributeResolutionContext) {
+        final UserDTO ecaUser = new UserDTO();
+        
+        if (principalMappings.keySet().contains(idpIdValue)) {
+            log.debug("The mapping definitions found for idpId {}", idpIdValue);
+            final Map<String, String> attributeMappings = principalMappings.get(idpIdValue);
+            
+            final AuthenticationContext authnContext = attributeResolutionContext.getParent().getSubcontext(AuthenticationContext.class);
+            final Subject subject = authnContext.getAuthenticationResult().getSubject();
+            final Set<KeyValuePrincipal> principals = subject.getPrincipals(KeyValuePrincipal.class);
+            
+            final Set<String> roles = new HashSet<>();
+            final Set<String> groups = new HashSet<>();
+            final Set<String> schoolIds = new HashSet<>();
+                        
+            for (final Entry<String, String> entry : attributeMappings.entrySet()) {
+                final Iterator<KeyValuePrincipal> iterator = principals.iterator();
+                while (iterator.hasNext()) {
+                    final KeyValuePrincipal principal = iterator.next();
+                    if (entry.getValue().equals(principal.getKey())) {
+                        switch (entry.getKey()) {
+                            case ATTR_ID_USERNAME:
+                                //TODO: generated in the same was as in the data component
+                                final String mpassUsername = DigestUtils.sha1Hex(idpIdValue + principal.getValue());
+                                ecaUser.setUsername("MPASSOID." + mpassUsername);
+                                break;
+                            case ATTR_ID_FIRSTNAME:
+                                ecaUser.setFirstName(principal.getValue());
+                                break;
+                            case ATTR_ID_SURNAME:
+                                ecaUser.setLastName(principal.getValue());
+                                break;
+                            case ATTR_ID_LEGACY_ID:
+                                final AttributesDTO legacyId = ecaUser.new AttributesDTO();
+                                legacyId.setName(ATTR_ID_LEGACY_ID);
+                                legacyId.setValue(principal.getValue());
+                                ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), legacyId));
+                                break;
+                            case ATTR_ID_MUNICIPALITY_CODE:
+                                final AttributesDTO municipalityCode = ecaUser.new AttributesDTO();
+                                municipalityCode.setName(ATTR_ID_MUNICIPALITY_CODE);
+                                municipalityCode.setValue(principal.getValue());
+                                ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), municipalityCode));
+                                break;
+                            case ATTR_ID_ROLES:
+                                roles.add(principal.getValue());
+                                break;
+                            case ATTR_ID_GROUPS:
+                                groups.add(principal.getValue());
+                                break;
+                            case ATTR_ID_SCHOOL_IDS:
+                                schoolIds.add(principal.getValue());
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            if (roles.size() != 1) {
+                log.warn("Could not find a single role, the size of the set is {}", roles.size());
+            } else {
+                final RolesDTO[] rolesDTOs = new RolesDTO[schoolIds.size()];
+                int i = 0;
+                for (final String schoolId : schoolIds) {
+                    log.debug("Added schoolId {}", schoolId);
+                    final RolesDTO rolesDTO = ecaUser.new RolesDTO();
+                    rolesDTO.setSchool(schoolId);
+                    rolesDTO.setRole(roles.iterator().next());
+                    //TODO: only one group currently supported
+                    if (staticValues.keySet().contains(idpIdValue)) {
+                        final String municipality = staticValues.get(idpIdValue).get(ATTR_ID_MUNICIPALITIES);
+                        if (StringSupport.trimOrNull(municipality) != null) {
+                            rolesDTO.setMunicipality(municipality);
+                        }
+                        final String munCode = staticValues.get(idpIdValue).get(ATTR_ID_MUNICIPALITY_CODE);
+                        if (StringSupport.trimOrNull(munCode) != null) {
+                            final AttributesDTO municipalityCode = ecaUser.new AttributesDTO();
+                            municipalityCode.setName(ATTR_ID_MUNICIPALITY_CODE);
+                            municipalityCode.setValue(munCode);
+                            ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), municipalityCode));
+                        }
+                    }
+                    if (!groups.isEmpty()) {
+                        rolesDTO.setGroup(groups.iterator().next());
+                    }
+                    rolesDTOs[i] = rolesDTO;
+                    i = i + 1;
+                }
+                ecaUser.setRoles(rolesDTOs);
+            }
+            
+        }
+        return ecaUser;
+    }
+    
+    protected AttributesDTO[] appendNewAttribute(final AttributesDTO[] existing, final AttributesDTO newAttr) {
+        final AttributesDTO[] newAttrs;
+        if (existing == null || existing.length == 0) {
+            log.debug("Existing was null, adding new value {}", newAttr.getName());
+            newAttrs = new AttributesDTO[1];
+            newAttrs[0] = newAttr;
+        } else {
+            log.debug("Found existing values: {}, adding new {}", existing.length, newAttr.getName());
+            newAttrs = new AttributesDTO[existing.length + 1];
+            for (int i = 0; i < existing.length; i++) {
+                newAttrs[i] = existing[i];
+            }
+            newAttrs[existing.length] = newAttr;
+        }
+        return newAttrs;
+        
+    }
+    
+    protected UserDTO getUserDetailsViaRest(final String idpIdValue, @Nonnull final AttributeResolverWorkContext attributeResolverWorkContext) throws ResolutionException {
+
+        
         log.debug("Calling {} for resolving attributes", endpointUrl);
 
         String authnIdValue = collectSingleAttributeValue(attributeResolverWorkContext.
@@ -183,12 +373,6 @@ public class RestDataConnector extends AbstractDataConnector {
             throw new ResolutionException("Could not use UTF-8 for encoding authnID", e);
         }
         log.debug("AuthnID after URL encoding = {}", authnIdValue);
-        final String idpIdValue =
-                collectSingleAttributeValue(attributeResolverWorkContext.getResolvedIdPAttributeDefinitions(), idpId);
-        if (StringSupport.trimOrNull(idpIdValue) == null) {
-            log.error("Could not resolve idpId value");
-            throw new ResolutionException("Could not resolve idpId value");
-        }
         final String attributeCallUrl = endpointUrl + "?" + idpIdValue + "=" + authnIdValue;
 
         final HttpClient httpClient;
@@ -196,7 +380,7 @@ public class RestDataConnector extends AbstractDataConnector {
             httpClient = buildClient();
         } catch (Exception e) {
             log.error("Could not build HTTP client, skipping attribute resolution", e);
-            return attributes;
+            return null;
         }
         log.debug("Calling URL {}", attributeCallUrl);
         final HttpContext context = HttpClientContext.create();          
@@ -208,7 +392,7 @@ public class RestDataConnector extends AbstractDataConnector {
             restResponse = httpClient.execute(getMethod, context);
         } catch (Exception e) {
             log.error("Could not open connection to REST API, skipping attribute resolution", e);
-            return attributes;
+            return null;
         }
 
         final int status = restResponse.getStatusLine().getStatusCode();
@@ -227,9 +411,7 @@ public class RestDataConnector extends AbstractDataConnector {
             log.trace("Response {}", restResponseStr);
             if (status == HttpStatus.SC_OK) {
                 final Gson gson = new Gson();
-                final UserDTO ecaUser = gson.fromJson(restResponseStr, UserDTO.class);
-                populateAttributes(attributes, ecaUser);
-                log.debug("{} attributes are now populated", attributes.size());
+                return gson.fromJson(restResponseStr, UserDTO.class);
             } else {
                 log.warn("No attributes found for session with idpId {}, http status {}", idpIdValue, status);
             }
@@ -238,7 +420,7 @@ public class RestDataConnector extends AbstractDataConnector {
         } finally {
             EntityUtils.consumeQuietly(restResponse.getEntity());
         }
-        return attributes;
+        return null;
     }
     
     /**

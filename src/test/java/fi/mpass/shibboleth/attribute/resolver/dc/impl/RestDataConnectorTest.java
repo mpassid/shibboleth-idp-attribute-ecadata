@@ -29,10 +29,13 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.security.auth.Subject;
 
 import net.shibboleth.idp.attribute.IdPAttribute;
 import net.shibboleth.idp.attribute.IdPAttributeValue;
@@ -41,6 +44,8 @@ import net.shibboleth.idp.attribute.resolver.AttributeDefinition;
 import net.shibboleth.idp.attribute.resolver.ResolutionException;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolutionContext;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolverWorkContext;
+import net.shibboleth.idp.authn.AuthenticationResult;
+import net.shibboleth.idp.authn.context.AuthenticationContext;
 import net.shibboleth.idp.saml.impl.TestSources;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.httpclient.HttpClientBuilder;
@@ -71,6 +76,7 @@ import fi.mpass.shibboleth.attribute.resolver.data.UserDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
 import fi.mpass.shibboleth.attribute.resolver.dc.impl.RestDataConnector;
 import fi.mpass.shibboleth.attribute.resolver.spring.dc.RestDataConnectorParserTest;
+import fi.mpass.shibboleth.authn.principal.impl.ShibAttributePrincipal;
 
 /**
  * Unit tests for {@link RestDataConnector}.
@@ -258,6 +264,30 @@ public class RestDataConnectorTest {
         Mockito.doReturn(mockBuilder).when(mockConnector).getHttpClientBuilder();
         testSettings(dataConnector, false, "");
         return mockConnector.doResolve(context, workContext);
+    }
+    
+    @Test
+    public void testPrincipals() throws Exception {
+        Map<String, IdPAttribute> attrs = resolveAttributes("restdc-full.xml", new ShibAttributePrincipal("uid", "uidValue"), new ShibAttributePrincipal("schoolId", "00200"), new ShibAttributePrincipal("role", "Opettaja"));
+        Assert.assertEquals(attrs.keySet().size(), 7);
+    }
+    
+    protected Map<String, IdPAttribute> resolveAttributes(String connectorSettings, Principal... principals) throws Exception {
+        final RestDataConnector dataConnector = RestDataConnectorParserTest.initializeDataConnector(connectorSettings);
+        final AttributeResolutionContext context = TestSources.createResolutionContext(TestSources.PRINCIPAL_ID, 
+                TestSources.IDP_ENTITY_ID, TestSources.SP_ENTITY_ID);
+        final AttributeResolverWorkContext workContext =
+        context.getSubcontext(AttributeResolverWorkContext.class, false);
+        recordWorkContextAttribute(expectedHookAttribute, "hookAttributeValue", workContext);
+        recordWorkContextAttribute(expectedIdpId, "idpIdValue", workContext);
+        final AuthenticationContext authnContext = context.getParent().getSubcontext(AuthenticationContext.class, true);
+        final Subject subject = new Subject();
+        for (final Principal principal : principals) {
+            subject.getPrincipals().add(principal);
+        }
+        final AuthenticationResult authnResult = new AuthenticationResult("mockFlow", subject);
+        authnContext.setAuthenticationResult(authnResult);
+        return dataConnector.doResolve(context, workContext);
     }
     
     /**
