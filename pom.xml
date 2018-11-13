@@ -70,6 +70,13 @@ THE SOFTWARE.
         </license>
     </licenses>
 
+    <scm>
+        <url>https://github.com/mpassid/shibboleth-idp-attribute-ecadata</url>
+        <connection>scm:git:git://github.com/mpassid/shibboleth-idp-attribute-ecadata.git</connection>
+        <developerConnection>scm:git:https://github.com/mpassid/shibboleth-idp-attribute-ecadata</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
     <dependencies>
         <!-- Compile Dependencies -->
         <dependency>
