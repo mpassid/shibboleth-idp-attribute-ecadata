@@ -259,7 +259,7 @@ THE SOFTWARE.
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <includeGroupIds>fi.mpass</includeGroupIds>
+                            <includeGroupIds>fi.mpass,com.google.code.gson</includeGroupIds>
                         </configuration>
                     </execution>
                 </executions>
