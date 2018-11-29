@@ -288,7 +288,15 @@ public class RestDataConnector extends AbstractDataConnector {
                                 groups.add(principal.getValue());
                                 break;
                             case ATTR_ID_SCHOOL_IDS:
-                                schoolIds.add(principal.getValue());
+                                String value = principal.getValue();
+                                if (value != null && value.contains(";")) {
+                                    String[] codes = value.split(";");
+                                    for (String code : codes) {
+                                        schoolIds.add(code.replace("\\", ""));
+                                    }
+                                } else {
+                                    schoolIds.add(principal.getValue());
+                                }
                                 break;
                             default:
                                 break;
