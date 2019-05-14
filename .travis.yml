@@ -4,8 +4,7 @@ jdk:
   - openjdk7
 
 before_install:
-  - git clone https://github.com/mpassid/shibboleth-idp-authn-shibsp
-  - git checkout tags/0.9.7
+  - git clone https://github.com/mpassid/shibboleth-idp-authn-shibsp -b 0.9.7
   - mvn install -f shibboleth-idp-authn-shibsp/pom.xml
 
 script:
