@@ -106,6 +106,9 @@ public class RestDataConnector extends AbstractDataConnector {
     /** The attribute id for the groups. */
     public static final String ATTR_ID_GROUPS = "groups";
     
+    /** The attribute id for group level **/
+    public static final String ATTR_ID_GROUPLEVEL = "groupLevel";
+    
     /** The attribute id for the schools. */
     public static final String ATTR_ID_SCHOOLS = "schools";
 
@@ -287,6 +290,9 @@ public class RestDataConnector extends AbstractDataConnector {
                             case ATTR_ID_GROUPS:
                                 groups.add(principal.getValue());
                                 break;
+                            case ATTR_ID_GROUPLEVEL:
+                            	ecaUser.setGroupLevel(principal.getValue());
+                            	break;
                             case ATTR_ID_SCHOOL_IDS:
                                 String value = principal.getValue();
                                 if (value != null && value.contains(";")) {
@@ -441,6 +447,7 @@ public class RestDataConnector extends AbstractDataConnector {
         populateAttribute(attributes, ATTR_ID_USERNAME, ecaUser.getUsername());
         populateAttribute(attributes, ATTR_ID_FIRSTNAME, ecaUser.getFirstName());
         populateAttribute(attributes, ATTR_ID_SURNAME, ecaUser.getLastName());
+        populateAttribute(attributes, ATTR_ID_GROUPLEVEL, ecaUser.getGroupLevel());
         if (ecaUser.getRoles() != null) {
             for (int i = 0; i < ecaUser.getRoles().length; i++) {
                 final String rawSchool = ecaUser.getRoles()[i].getSchool();
