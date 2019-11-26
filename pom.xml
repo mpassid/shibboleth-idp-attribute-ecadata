@@ -28,7 +28,7 @@ THE SOFTWARE.
         <version>3.3.1</version>
     </parent>
     <groupId>fi.mpass</groupId>
-    <version>0.9.5</version>
+    <version>0.9.6</version>
     <packaging>jar</packaging>
     <artifactId>idp-attribute-impl-ecadata</artifactId>
 
