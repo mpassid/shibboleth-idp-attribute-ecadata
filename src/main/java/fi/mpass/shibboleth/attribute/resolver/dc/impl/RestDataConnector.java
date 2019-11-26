@@ -105,7 +105,10 @@ public class RestDataConnector extends AbstractDataConnector {
     
     /** The attribute id for the groups. */
     public static final String ATTR_ID_GROUPS = "groups";
-    
+
+    /** The attribute id for the groups. */
+    public static final String ATTR_ID_GROUP_LEVELS = "groupLevels";
+
     /** The attribute id for the schools. */
     public static final String ATTR_ID_SCHOOLS = "schools";
 
@@ -251,6 +254,7 @@ public class RestDataConnector extends AbstractDataConnector {
             final Set<String> roles = new HashSet<>();
             final Set<String> groups = new HashSet<>();
             final Set<String> schoolIds = new HashSet<>();
+            final Set<String> groupLevels = new HashSet<>();
                         
             for (final Entry<String, String> entry : attributeMappings.entrySet()) {
                 final Iterator<KeyValuePrincipal> iterator = principals.iterator();
@@ -286,6 +290,9 @@ public class RestDataConnector extends AbstractDataConnector {
                                 break;
                             case ATTR_ID_GROUPS:
                                 groups.add(principal.getValue());
+                                break;
+                            case ATTR_ID_GROUP_LEVELS:
+                                groupLevels.add(principal.getValue());
                                 break;
                             case ATTR_ID_SCHOOL_IDS:
                                 String value = principal.getValue();
@@ -332,6 +339,14 @@ public class RestDataConnector extends AbstractDataConnector {
                     }
                     if (!groups.isEmpty()) {
                         rolesDTO.setGroup(groups.iterator().next());
+                    }
+                    if (!groupLevels.isEmpty()) {
+                        final String level = groupLevels.iterator().next();
+                        try {
+                            rolesDTO.setGroupLevel(Integer.parseInt(level));
+                        } catch (NumberFormatException e) {
+                            log.warn("Coult not parse given group level {} to an integer", level);
+                        }
                     }
                     rolesDTOs[i] = rolesDTO;
                     i = i + 1;
@@ -461,6 +476,9 @@ public class RestDataConnector extends AbstractDataConnector {
                 populateAttribute(attributes, ATTR_ID_GROUPS, ecaUser.getRoles()[i].getGroup());
                 populateAttribute(attributes, ATTR_ID_ROLES, ecaUser.getRoles()[i].getRole());
                 populateAttribute(attributes, ATTR_ID_MUNICIPALITIES, ecaUser.getRoles()[i].getMunicipality());
+                if (ecaUser.getRoles()[i].getGroupLevel() > 0) {
+                    populateAttribute(attributes, ATTR_ID_GROUP_LEVELS, "" + ecaUser.getRoles()[i].getGroupLevel());
+                }
             }
         }
         if (ecaUser.getAttributes() != null) {

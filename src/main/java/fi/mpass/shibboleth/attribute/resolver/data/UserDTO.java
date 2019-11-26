@@ -32,8 +32,8 @@ import com.google.gson.annotations.SerializedName;
  * An example of a single user:
  * 
  * { "username": "123abc", "first_name": "Teppo", "last_name": "Testaaja", "roles": [ { "school": "17392", "role":
- * "teacher", "group": "7A" } ] "attributes": [ { "attribute1_id": "attribute1_data", "attribute2_id": "attribute2_data"
- * } ] }
+ * "teacher", "group": "7A", "groupLevel": 7 } ] "attributes": [ { "attribute1_id": "attribute1_data",
+ * "attribute2_id": "attribute2_data" } ] }
  */
 public class UserDTO {
 
@@ -70,6 +70,9 @@ public class UserDTO {
         
         /** The municipality corresponding to the role. */
         private String municipality;
+        
+        /** The group level corresponding to the role. */
+        private int groupLevel;
 
         /**
          * Set school.
@@ -141,6 +144,24 @@ public class UserDTO {
          */
         public String getMunicipality() {
             return municipality;
+        }
+        
+        /**
+         * Set group level.
+         * 
+         * @param newGroupLevel The value to be set.
+         */
+        public void setGroupLevel(int newGroupLevel) {
+            groupLevel = newGroupLevel;
+        }
+        
+        /**
+         * Get group level.
+         * 
+         * @return The value of group level.
+         */
+        public int getGroupLevel() {
+            return groupLevel;
         }
     }
 

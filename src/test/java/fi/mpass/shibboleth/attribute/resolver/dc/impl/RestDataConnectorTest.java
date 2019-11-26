@@ -211,8 +211,13 @@ public class RestDataConnectorTest {
     public void testDefaultOneRole() throws ComponentInitializationException, ResolutionException, Exception {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("user-1role-1attr.json", 
                 "restdc-min.xml");
-        Assert.assertEquals(resolvedAttributes.size(), 10);
+        Assert.assertEquals(resolvedAttributes.size(), 11);
         Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        final List<IdPAttributeValue<?>> groupLevels 
+            = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS).getValues();
+        Assert.assertNotNull(groupLevels);
+        Assert.assertEquals(groupLevels.size(), 1);
+        Assert.assertTrue(verifyAttributeValueExists(groupLevels, "7"));
     }
 
     /**
@@ -225,8 +230,36 @@ public class RestDataConnectorTest {
     public void testDefaultTwoRoles() throws ComponentInitializationException, ResolutionException, Exception {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("user-2role-2attr.json", 
                 "restdc-min.xml");
-        Assert.assertEquals(resolvedAttributes.size(), 11);
+        Assert.assertEquals(resolvedAttributes.size(), 12);
         Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        final List<IdPAttributeValue<?>> groupLevels 
+            = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS).getValues();
+        Assert.assertNotNull(groupLevels);
+        Assert.assertEquals(groupLevels.size(), 2);
+        Assert.assertTrue(verifyAttributeValueExists(groupLevels, "7", "9"));
+    }
+    
+    /**
+     * Verifies that all the given values are found from the given list of attributes.
+     * 
+     * @param output The list of attributes whose contents are verified.
+     * @param input The values whose existence is verified from the list of attributes.
+     * @return True if all values were found, false otherwise.
+     */
+    protected boolean verifyAttributeValueExists(final List<IdPAttributeValue<?>> output, String... input) {
+        for (final String inputValue : input) {
+            boolean found = false;
+            for (final IdPAttributeValue<?> value : output) {
+                if (inputValue.equals(value.getValue().toString())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
