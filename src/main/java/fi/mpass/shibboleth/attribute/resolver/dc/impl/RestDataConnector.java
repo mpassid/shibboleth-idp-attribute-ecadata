@@ -459,7 +459,7 @@ public class RestDataConnector extends AbstractDataConnector {
         if (ecaUser.getRoles() != null) {
             for (int i = 0; i < ecaUser.getRoles().length; i++) {
                 final String rawSchool = ecaUser.getRoles()[i].getSchool();
-                final String mappedSchool = getSchoolName(getHttpClientBuilder(), rawSchool, nameApiBaseUrl);
+                final String mappedSchool = getSchoolName(rawSchool, nameApiBaseUrl);
                 if (mappedSchool == null) {
                     if (StringUtils.isNumeric(rawSchool)) {
                         populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);                        
@@ -727,8 +727,7 @@ public class RestDataConnector extends AbstractDataConnector {
      * @param baseUrl The base URL for the external API. It is appended with the ID of the school.
      * @return The name of the school.
      */
-    public static synchronized String getSchoolName(final HttpClientBuilder clientBuilder, 
-            final String id, final String baseUrl) {
+    public String getSchoolName(final String id, final String baseUrl) {
         final Logger log = LoggerFactory.getLogger(RestDataConnector.class);
         if (StringSupport.trimOrNull(id) == null || !StringUtils.isNumeric(id) || id.length() > 6) {
             return null;
@@ -736,7 +735,7 @@ public class RestDataConnector extends AbstractDataConnector {
         final HttpResponse response;
         try {
             final HttpUriRequest get = RequestBuilder.get().setUri(baseUrl + id).build();
-            response = clientBuilder.buildClient().execute(get);
+            response = buildClient().execute(get);
         } catch (Exception e) {
             log.error("Could not get school information with id {}", id, e);
             return null;

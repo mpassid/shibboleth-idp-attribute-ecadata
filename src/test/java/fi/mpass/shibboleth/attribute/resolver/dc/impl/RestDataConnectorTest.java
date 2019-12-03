@@ -389,22 +389,23 @@ public class RestDataConnectorTest {
     
     @Test
     public void testNullSchoolName() {
-        Assert.assertNull(RestDataConnector.getSchoolName(null, null, null));
+        Assert.assertNull(new RestDataConnector().getSchoolName(null, null));
     }
 
     @Test
     public void testEmptySchoolName() {
-        Assert.assertNull(RestDataConnector.getSchoolName(null, "", null));
+        Assert.assertNull(new RestDataConnector().getSchoolName("", null));
     }
 
     @Test
     public void testNonNumericSchoolName() {
-        Assert.assertNull(RestDataConnector.getSchoolName(null, "mock", null));
+        Assert.assertNull(new RestDataConnector().getSchoolName("mock", null));
     }
 
     @Test
     public void testLongSchoolName() {
-        Assert.assertNull(RestDataConnector.getSchoolName(null, "1234567", null));
+        RestDataConnector c = new RestDataConnector();
+        Assert.assertNull(new RestDataConnector().getSchoolName("1234567", null));
     }
 
     @Test
@@ -413,7 +414,8 @@ public class RestDataConnectorTest {
         HttpClient mockClient = Mockito.mock(HttpClient.class);
         Mockito.when(mockClient.execute((HttpUriRequest)Mockito.any())).thenThrow(new IOException("mock"));
         Mockito.when(clientBuilder.buildClient()).thenReturn(mockClient);
-        final String name = RestDataConnector.getSchoolName(clientBuilder, "123456", "http://localhost/");
+        final RestDataConnector connector = new RestDataConnector(clientBuilder);
+        final String name = connector.getSchoolName("123456", "http://localhost/");
         Assert.assertNull(name);
     }
 
@@ -454,7 +456,7 @@ public class RestDataConnectorTest {
         final SocketAddress address = new InetSocketAddress(port);
         connection.connect(address);
         try {
-            return RestDataConnector.getSchoolName(new HttpClientBuilder(), "123456", 
+            return new RestDataConnector().getSchoolName("123456", 
                     "http://localhost:" + port + "/mock");
         } catch (Exception e) {
             log.debug("Catched exception", e);
