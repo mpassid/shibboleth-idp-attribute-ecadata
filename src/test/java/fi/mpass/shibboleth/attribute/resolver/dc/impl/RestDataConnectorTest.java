@@ -447,16 +447,45 @@ public class RestDataConnectorTest {
         Assert.assertNotNull(name);
         Assert.assertEquals(name, "Mock School Name");
     }
+    
+    @Test
+    public void testSchoolNameMultipleLanguagesInMetadataSuccess() throws Exception {
+        final String name = executeWithServer("[{\"koodiUri\":\"oppilaitosnumero_123456\",\"metadata\": [" + 
+        		"{\"nimi\":\"Mock skolanamn\",\"lyhytNimi\":\"Mock Kort\",\"kieli\":\"SV\"}," + 
+        		"{\"nimi\":\"Mock koulun nimi\",\"lyhytNimi\":\"Mock Lyhyt\",\"kieli\":\"FI\"}," + 
+        		"{\"nimi\":\"Mock School Name\",\"lyhytNimi\":\"Mock Short\",\"kieli\":\"EN\"}]," + 
+        		"\"versio\":1,\"koodiArvo\":\"123456\"}]");
+        Assert.assertNotNull(name);
+        Assert.assertEquals(name, "Mock koulun nimi");
+    }
+    
+    @Test
+    public void testSchoolNameMultipleLanguagesInMetadataNoFISuccess() throws Exception {
+        final String name = executeWithServer("[{\"koodiUri\":\"oppilaitosnumero_123456\",\"metadata\": [" + 
+        		"{\"nimi\":\"Mock skolanamn\",\"lyhytNimi\":\"Mock Kort\",\"kieli\":\"SV\"}," + 
+        		"{\"nimi\":\"Mock School Name\",\"lyhytNimi\":\"Mock Short\",\"kieli\":\"EN\"}]," + 
+        		"\"versio\":1,\"koodiArvo\":\"123456\"}]", "1.2.3.4.5.6");
+        Assert.assertNotNull(name);
+        Assert.assertEquals(name, "Mock skolanamn");
+    }
 
     protected String executeWithServer(final String responseContent) throws Exception {
-        final Container container = new SimpleContainer(responseContent);
+    	return executeWithServer(responseContent, null);
+    }
+    
+    protected String executeWithServer(final String responseContent, final String callerId) throws Exception {
+        final Container container = new SimpleContainer(responseContent, callerId);
         final SocketProcessor server = new ContainerSocketProcessor(container);
         final Connection connection = new SocketConnection(server);
         final int port = 8997;
         final SocketAddress address = new InetSocketAddress(port);
         connection.connect(address);
         try {
-            return new RestDataConnector().getSchoolName("123456", 
+        	RestDataConnector restDataConnector = new RestDataConnector();
+        	if (callerId != null) {
+        		restDataConnector.setNameApiCallerId(callerId);
+        	}
+            return restDataConnector.getSchoolName("123456", 
                     "http://localhost:" + port + "/mock");
         } catch (Exception e) {
             log.debug("Catched exception", e);
@@ -472,11 +501,16 @@ public class RestDataConnectorTest {
     class SimpleContainer implements Container {
 
         final String responseContent;
-        
+        final String callerIdHeader;
         /**
          * Constructor.
          */
         public SimpleContainer(final String response) {
+        	this(response, null);
+        }
+        
+        public SimpleContainer(final String response, final String callerId) {
+        	callerIdHeader = callerId;
             responseContent = response;
         }
 
@@ -486,6 +520,8 @@ public class RestDataConnectorTest {
             log.trace("Server got request for {}", request.getTarget());
             try {
                 response.setContentType("application/json");
+                Assert.assertEquals(request.getValue(RestDataConnector.HEADER_NAME_CALLER_ID), callerIdHeader);
+                
                 if (responseContent != null) {
                     IOUtils.copy(new StringReader(responseContent), response.getOutputStream());
                 }

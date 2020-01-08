@@ -8,7 +8,7 @@
     xsi:schemaLocation="urn:mace:shibboleth:2.0:resolver http://shibboleth.net/schema/idp/shibboleth-attribute-resolver.xsd
                         urn:mace:shibboleth:2.0:resolver:dc http://shibboleth.net/schema/idp/shibboleth-attribute-resolver-dc.xsd
                         fi.mpass.shibboleth.attribute.dc.rest file:src/main/resources/rest-connector.xsd"
-    xsi:type="eca:RestDataConnector" endpointUrl="testindEndpointUrl" hookAttribute="testingHookAttribute" idpId="testingIdpId" token="testingToken" nameApiBaseUrl="http://localhost:8997/mock_" resultAttributePrefix="testingPrefix" disregardTLSCertificate="true">
+    xsi:type="eca:RestDataConnector" endpointUrl="testindEndpointUrl" hookAttribute="testingHookAttribute" idpId="testingIdpId" token="testingToken" nameApiBaseUrl="http://localhost:8997/mock_" resultAttributePrefix="testingPrefix" disregardTLSCertificate="true" nameApiCallerId="testingCallerId">
     <eca:DirectIdpAttributes idpId="idpIdValue" municipalityCode="007" municipality="Helsinki">
         <eca:Mapping attributeName="username" principalName="uid"/>
         <eca:Mapping attributeName="firstName" principalName="givenName"/>

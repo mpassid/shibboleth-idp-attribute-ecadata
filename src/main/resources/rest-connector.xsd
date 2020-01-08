@@ -105,6 +105,13 @@ THE SOFTWARE.
                         </documentation>
                     </annotation>
                 </attribute>
+                <attribute name="nameApiCallerId" type="string" use="optional">
+                    <annotation>
+                        <documentation>
+                            Set to the caller-id used with the Finnish Opintopolku API.
+                        </documentation>
+                    </annotation>
+                </attribute>
             </extension>
         </complexContent>
     </complexType>

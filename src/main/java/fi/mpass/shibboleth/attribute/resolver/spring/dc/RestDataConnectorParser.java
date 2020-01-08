@@ -78,6 +78,10 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
         }
         String nameApiBaseUrl = element.getAttributeNS(null, "nameApiBaseUrl");
         builder.addPropertyValue("nameApiBaseUrl", nameApiBaseUrl);
+        String nameApiCallerId = element.getAttributeNS(null, "nameApiCallerId");
+        if (StringSupport.trimOrNull(nameApiCallerId) != null) {
+        	builder.addPropertyValue("nameApiCallerId", nameApiCallerId);
+        }
         final List<Element> directIdpAttributes = ElementSupport.getChildElements(element, DIRECT_IDP_ATTRIBUTES_NAME);
         if (directIdpAttributes != null) {
             final Map<String, Map<String, String>> principalMappings = new HashMap<>();

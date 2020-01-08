@@ -8,7 +8,12 @@
     xsi:schemaLocation="urn:mace:shibboleth:2.0:resolver http://shibboleth.net/schema/idp/shibboleth-attribute-resolver.xsd
                         urn:mace:shibboleth:2.0:resolver:dc http://shibboleth.net/schema/idp/shibboleth-attribute-resolver-dc.xsd
                         fi.mpass.shibboleth.attribute.dc.rest file:src/main/resources/rest-connector.xsd"
-    xsi:type="eca:RestDataConnector" endpointUrl="testindEndpointUrl" hookAttribute="testingHookAttribute" idpId="testingIdpId" token="testingToken" nameApiBaseUrl="http://localhost:8997/mock_">
+    xsi:type="eca:RestDataConnector"
+    endpointUrl="testindEndpointUrl"
+    hookAttribute="testingHookAttribute"
+    idpId="testingIdpId"
+    token="testingToken"
+    nameApiBaseUrl="http://localhost:8997/mock_">
     <eca:DirectIdpAttributes idpId="temp">
         <eca:Mapping attributeName="mockName" principalName="mockPrincipal"/>
     </eca:DirectIdpAttributes>

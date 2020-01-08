@@ -59,6 +59,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosDTO;
+import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosMetadataDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.AttributesDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
@@ -133,6 +134,8 @@ public class RestDataConnector extends AbstractDataConnector {
     /** The default base URL for fetching school info. */
     public static final String DEFAULT_BASE_URL_SCHOOL_INFO = 
             "https://virkailija.opintopolku.fi/koodisto-service/rest/codeelement/oppilaitosnumero_";
+    
+    public static final String HEADER_NAME_CALLER_ID = "caller-id";
 
     /** Class logging. */
     private final Logger log = LoggerFactory.getLogger(RestDataConnector.class);
@@ -154,6 +157,9 @@ public class RestDataConnector extends AbstractDataConnector {
     
     /** The base URL for resolving the school name via API. */
     private String nameApiBaseUrl;
+    
+    /** The caller-id used with school information API. */
+    private String nameApiCallerId;
 
     /** The {@link HttpClientBuilder} used for constructing HTTP clients. */
     private HttpClientBuilder httpClientBuilder;
@@ -676,6 +682,22 @@ public class RestDataConnector extends AbstractDataConnector {
     public String getNameApiBaseUrl() {
         return nameApiBaseUrl;
     }
+    
+    /**
+     * Gets the caller-id used with school information API.
+     * @return The caller-id for the school information API.
+     */
+	public String getNameApiCallerId() {
+		return nameApiCallerId;
+	}
+
+	/**
+     * Sets the caller-id used with school information API.
+     * @param The caller-id used with school information API.
+     */
+	public void setNameApiCallerId(final String callerId) {
+		nameApiCallerId = callerId;
+	}
 
     /**
      * Helper method for collecting single attribute value from the map of attribute definitions.
@@ -735,6 +757,11 @@ public class RestDataConnector extends AbstractDataConnector {
         final HttpResponse response;
         try {
             final HttpUriRequest get = RequestBuilder.get().setUri(baseUrl + id).build();
+            
+            if (nameApiCallerId != null) {
+            	get.setHeader(HEADER_NAME_CALLER_ID, nameApiCallerId);
+            }
+            
             response = buildClient().execute(get);
         } catch (Exception e) {
             log.error("Could not get school information with id {}", id, e);
@@ -757,8 +784,15 @@ public class RestDataConnector extends AbstractDataConnector {
         final Gson gson = new Gson();
         try {
             final OpintopolkuOppilaitosDTO[] oResponse = gson.fromJson(output, OpintopolkuOppilaitosDTO[].class);
-            if (oResponse.length == 1 && oResponse[0].getMetadata() != null && oResponse[0].getMetadata().length == 1) {
+            if (oResponse.length == 1 && oResponse[0].getMetadata() != null && oResponse[0].getMetadata().length > 0) {
                 log.debug("Successfully fetched name for id {}", id);
+                
+                for (OpintopolkuOppilaitosMetadataDTO metadata : oResponse[0].getMetadata()) {
+            		if ("FI".equals(metadata.getLanguage())) {
+            			return metadata.getName();
+            		}
+            	}
+                
                 return oResponse[0].getMetadata()[0].getName();
             }
         } catch (JsonSyntaxException | IllegalStateException e) {
@@ -768,4 +802,5 @@ public class RestDataConnector extends AbstractDataConnector {
         log.warn("Could not find name for id {}", id);
         return null;
     }
+
 }
