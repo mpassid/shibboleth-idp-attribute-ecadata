@@ -106,6 +106,10 @@ public class RestDataConnectorTest {
 
     /** The expected resolved OID after successful resolution. */
     private String expectedOid;
+    
+    /** The expected resolved learnerId after successful resolution. */
+    private String expectedLearnerId;
+    
 
     /**
      * Initialize unit tests.
@@ -119,6 +123,7 @@ public class RestDataConnectorTest {
         expectedResultAttribute = "username";
         expectedToken = "testingToken";
         expectedOid = "OID1";
+        expectedLearnerId = "1.2.246.562.24.10000000008";
     }
     
     /**
@@ -202,39 +207,88 @@ public class RestDataConnectorTest {
     }
 
     /**
-     * Tests {@link RestDataConnector} with minimum configuration, with 1 role for the user.
+     * Tests {@link RestDataConnector} with minimum configuration, with one teacher role for the user.
      * 
      * @throws ComponentInitializationException If component cannot be initialized.
      * @throws ResolutionException If attribute resolution fails.
      */
     @Test
-    public void testDefaultOneRole() throws ComponentInitializationException, ResolutionException, Exception {
-        final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("user-1role-1attr.json", 
+    public void testResolveAttributes_whenOneTeacherRole_shouldReturnValidUserDTO() 
+    		throws ComponentInitializationException, ResolutionException, Exception {
+        final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-1role-1attr.json", 
+                "restdc-min.xml");
+        Assert.assertEquals(resolvedAttributes.size(), 10);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID), null);
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
+    }
+    
+    /**
+     * Tests {@link RestDataConnector} with minimum configuration, with one student role for the user.
+     * 
+     * @throws ComponentInitializationException If component cannot be initialized.
+     * @throws ResolutionException If attribute resolution fails.
+     */
+    @Test
+    public void testResolveAttributes_whenOneStudentRole_shouldReturnValidUserDTO() 
+    		throws ComponentInitializationException, ResolutionException, Exception {
+        final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-1attr.json", 
                 "restdc-min.xml");
         Assert.assertEquals(resolvedAttributes.size(), 11);
         Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
         final List<IdPAttributeValue<?>> groupLevels 
             = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS).getValues();
-        Assert.assertNotNull(groupLevels);
-        Assert.assertEquals(groupLevels.size(), 1);
         Assert.assertTrue(verifyAttributeValueExists(groupLevels, "7"));
+        Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0).getValue(), expectedLearnerId);
     }
-
+    
     /**
-     * Tests {@link RestDataConnector} with minimum configuration, with two roles for the user.
+     * Tests {@link RestDataConnector} with minimum configuration, with one student role for the user.
      * 
      * @throws ComponentInitializationException If component cannot be initialized.
      * @throws ResolutionException If attribute resolution fails.
      */
     @Test
-    public void testDefaultTwoRoles() throws ComponentInitializationException, ResolutionException, Exception {
-        final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("user-2role-2attr.json", 
+    public void testResolveAttributes_whenOneStudentRoleWithInvalidGroupLevel_shouldReturnValidUserDTOWithoutGroupLevel() 
+    		throws ComponentInitializationException, ResolutionException, Exception {
+        final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-1attr-invalidGroupLevel.json", 
+                "restdc-min.xml");
+        Assert.assertEquals(resolvedAttributes.size(), 10);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
+        Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0).getValue(), expectedLearnerId);
+    }
+
+    /**
+     * Tests {@link RestDataConnector} with minimum configuration, with two teacher roles for the user.
+     * 
+     * @throws ComponentInitializationException If component cannot be initialized.
+     * @throws ResolutionException If attribute resolution fails.
+     */
+    @Test
+    public void testResolveAttributes_whenTwoTeacherRolesTwoAttributes_shouldReturnValidUserDTO() throws ComponentInitializationException, ResolutionException, Exception {
+        final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-2role-2attr.json", 
+                "restdc-min.xml");
+        Assert.assertEquals(resolvedAttributes.size(), 11);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_LEARNER_ID));
+    }
+    
+    /**
+     * Tests {@link RestDataConnector} with minimum configuration, with two student roles for the user.
+     * 
+     * @throws ComponentInitializationException If component cannot be initialized.
+     * @throws ResolutionException If attribute resolution fails.
+     */
+    @Test
+    public void testResolveAttributes_whenTwoStudentRoles_shouldReturnValidUserDTOWithStudentRole() throws ComponentInitializationException, ResolutionException, Exception {
+        final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-2role-2attr.json", 
                 "restdc-min.xml");
         Assert.assertEquals(resolvedAttributes.size(), 12);
         Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
         final List<IdPAttributeValue<?>> groupLevels 
             = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS).getValues();
-        Assert.assertNotNull(groupLevels);
         Assert.assertEquals(groupLevels.size(), 2);
         Assert.assertTrue(verifyAttributeValueExists(groupLevels, "7", "9"));
     }

@@ -7,15 +7,13 @@
             "role": "teacher",
             "school": "12345",
             "group": "7C",
-            "municipality": "Great City",
-            "groupLevel": 7
+            "municipality": "Great City"
         },
         { 
             "role": "teacher",
             "school": "23456",
             "group": "9B",
-            "municipality": "Rival City",
-            "groupLevel": 9
+            "municipality": "Rival City"
         }
     ],
     "attributes": [

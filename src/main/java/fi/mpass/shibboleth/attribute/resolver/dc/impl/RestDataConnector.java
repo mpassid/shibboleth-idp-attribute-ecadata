@@ -26,6 +26,7 @@ package fi.mpass.shibboleth.attribute.resolver.dc.impl;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,10 +57,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosMetadataDTO;
+import fi.mpass.shibboleth.attribute.resolver.data.RolesTypeAdapter;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.AttributesDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
@@ -68,6 +71,7 @@ import net.shibboleth.idp.attribute.IdPAttribute;
 import net.shibboleth.idp.attribute.IdPAttributeValue;
 import net.shibboleth.idp.attribute.StringAttributeValue;
 import net.shibboleth.idp.attribute.resolver.AbstractDataConnector;
+import net.shibboleth.idp.attribute.resolver.DataConnector;
 import net.shibboleth.idp.attribute.resolver.ResolutionException;
 import net.shibboleth.idp.attribute.resolver.ResolvedAttributeDefinition;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolutionContext;
@@ -125,6 +129,9 @@ public class RestDataConnector extends AbstractDataConnector {
     /** The attribute id prefix for UserDTO/attribute keys. */
     public static final String ATTR_PREFIX = "attr_";
     
+    /** The attribute id for the national learner id (only used with direct IdP attributes). */
+    public static final String ATTR_ID_LEARNER_ID = "learnerId";
+    
     /** The attribute id for the legacy ID (only used with direct IdP attributes). */
     public static final String ATTR_ID_LEGACY_ID = "legacyId";
     
@@ -172,7 +179,7 @@ public class RestDataConnector extends AbstractDataConnector {
     
     /** The map for static attribute values for an IDP. */
     private Map<String, Map<String, String>> staticValues;
-
+    
     /**
      * Constructor.
      */
@@ -279,6 +286,12 @@ public class RestDataConnector extends AbstractDataConnector {
                             case ATTR_ID_SURNAME:
                                 ecaUser.setLastName(principal.getValue());
                                 break;
+                            case ATTR_ID_LEARNER_ID:
+                                final AttributesDTO learnerId = ecaUser.new AttributesDTO();
+                                learnerId.setName(ATTR_ID_LEARNER_ID);
+                                learnerId.setValue(principal.getValue());
+                                ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learnerId));
+                                break;
                             case ATTR_ID_LEGACY_ID:
                                 final AttributesDTO legacyId = ecaUser.new AttributesDTO();
                                 legacyId.setName(ATTR_ID_LEGACY_ID);
@@ -347,11 +360,11 @@ public class RestDataConnector extends AbstractDataConnector {
                         rolesDTO.setGroup(groups.iterator().next());
                     }
                     if (!groupLevels.isEmpty()) {
-                        final String level = groupLevels.iterator().next();
+                        final String groupLevel = groupLevels.iterator().next();
                         try {
-                            rolesDTO.setGroupLevel(Integer.parseInt(level));
+                            rolesDTO.setGroupLevel(Integer.parseInt(groupLevel));
                         } catch (NumberFormatException e) {
-                            log.warn("Coult not parse given group level {} to an integer", level);
+                            log.warn("Coult not parse given group level {} to an integer", groupLevel);
                         }
                     }
                     rolesDTOs[i] = rolesDTO;
@@ -439,7 +452,9 @@ public class RestDataConnector extends AbstractDataConnector {
             final String restResponseStr = EntityUtils.toString(restResponse.getEntity(), "UTF-8");
             log.trace("Response {}", restResponseStr);
             if (status == HttpStatus.SC_OK) {
-                final Gson gson = new Gson();
+                final Gson gson = new GsonBuilder()
+                		.registerTypeAdapter(RolesDTO.class, new RolesTypeAdapter())
+                		.create();
                 return gson.fromJson(restResponseStr, UserDTO.class);
             } else {
                 log.warn("No attributes found for session with idpId {}, http status {}", idpIdValue, status);
@@ -482,8 +497,8 @@ public class RestDataConnector extends AbstractDataConnector {
                 populateAttribute(attributes, ATTR_ID_GROUPS, ecaUser.getRoles()[i].getGroup());
                 populateAttribute(attributes, ATTR_ID_ROLES, ecaUser.getRoles()[i].getRole());
                 populateAttribute(attributes, ATTR_ID_MUNICIPALITIES, ecaUser.getRoles()[i].getMunicipality());
-                if (ecaUser.getRoles()[i].getGroupLevel() > 0) {
-                    populateAttribute(attributes, ATTR_ID_GROUP_LEVELS, "" + ecaUser.getRoles()[i].getGroupLevel());
+                if (ecaUser.getRoles()[i].getGroupLevel() != null) {
+                    populateAttribute(attributes, ATTR_ID_GROUP_LEVELS, ecaUser.getRoles()[i].getGroupLevel().toString());
                 }
             }
         }

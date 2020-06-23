@@ -1,0 +1,20 @@
+{
+    "username": "OID1",
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "roles": [
+        { 
+            "role": "student",
+            "school": "12345",
+            "group": "7C",
+            "groupLevel": "7",
+            "municipality": "Great City"
+        }
+    ],
+    "attributes": [
+        {
+            "name": "learnerId",
+            "value": "1.2.246.562.24.10000000008"
+        }
+    ]
+}

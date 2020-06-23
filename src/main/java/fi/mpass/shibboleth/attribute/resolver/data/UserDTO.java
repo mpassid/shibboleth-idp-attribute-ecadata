@@ -72,7 +72,7 @@ public class UserDTO {
         private String municipality;
         
         /** The group level corresponding to the role. */
-        private int groupLevel;
+        private Integer groupLevel;
 
         /**
          * Set school.
@@ -151,7 +151,7 @@ public class UserDTO {
          * 
          * @param newGroupLevel The value to be set.
          */
-        public void setGroupLevel(int newGroupLevel) {
+        public void setGroupLevel(Integer newGroupLevel) {
             groupLevel = newGroupLevel;
         }
         
@@ -160,7 +160,7 @@ public class UserDTO {
          * 
          * @return The value of group level.
          */
-        public int getGroupLevel() {
+        public Integer getGroupLevel() {
             return groupLevel;
         }
     }

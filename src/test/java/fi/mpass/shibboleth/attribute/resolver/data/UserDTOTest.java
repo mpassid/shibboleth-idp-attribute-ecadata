@@ -30,8 +30,8 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
-import fi.mpass.shibboleth.attribute.resolver.data.UserDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.AttributesDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
 
@@ -58,6 +58,7 @@ public class UserDTOTest {
         
         final RolesDTO roles = user.new RolesDTO();
         Assert.assertNull(roles.getGroup());
+        Assert.assertNull(roles.getGroupLevel());
         Assert.assertNull(roles.getMunicipality());
         Assert.assertNull(roles.getRole());
         Assert.assertNull(roles.getSchool());
@@ -79,21 +80,23 @@ public class UserDTOTest {
         assertAttribute(attributes, name, value);
         
         final String group = "mockGroup";
+        final Integer groupLevel = 1;
         final String municipality = "mockMunicipality";
         final String role = "mockRole";
         final String school = "mockSchool";
         roles.setGroup(group);
+        roles.setGroupLevel(groupLevel);
         roles.setMunicipality(municipality);
         roles.setRole(role);
         roles.setSchool(school);
-        assertRole(roles, group, municipality, role, school);
+        assertRole(roles, group, groupLevel, municipality, role, school);
         
         user.setAttributes(new AttributesDTO[] { attributes });
         user.setRoles(new RolesDTO[] { roles });
         Assert.assertEquals(user.getAttributes().length, 1);
         Assert.assertEquals(user.getRoles().length, 1);
         assertAttribute(user.getAttributes()[0], name, value);
-        assertRole(user.getRoles()[0], group, municipality, role, school);
+        assertRole(user.getRoles()[0], group, groupLevel, municipality, role, school);
     }
     
     /**
@@ -111,12 +114,14 @@ public class UserDTOTest {
      * Verifies role's contents.
      * @param role
      * @param group
+     * @param groupLevel
      * @param municipality
      * @param roleStr
      * @param school
      */
-    public void assertRole(final RolesDTO role, final String group, final String municipality, final String roleStr, final String school) {
+    public void assertRole(final RolesDTO role, final String group, final Integer groupLevel, final String municipality, final String roleStr, final String school) {
         Assert.assertEquals(role.getGroup(), group);
+        Assert.assertEquals(role.getGroupLevel(), groupLevel);
         Assert.assertEquals(role.getMunicipality(), municipality);
         Assert.assertEquals(role.getRole(), roleStr);
         Assert.assertEquals(role.getSchool(), school);        
@@ -136,11 +141,11 @@ public class UserDTOTest {
     }
     
     /**
-     * Tests parsing of a single user data transfer object with one role and one attribute.
+     * Tests parsing of a single user data transfer object with one role (teacher) and one attribute.
      */
     @Test
-    public void testOneRoleOneAttribute() {
-        UserDTO user = getUser("user-1role-1attr.json");
+    public void testUserDTOFromJson_whenOneTeacherRoleOneAttribute_shouldReturnUserDTOWithTeacherRole() {
+        UserDTO user = getUser("teacher-1role-1attr.json");
         Assert.assertEquals(user.getUsername(), "OID1");
         Assert.assertEquals(user.getFirstName(), "John");
         Assert.assertEquals(user.getLastName(), "Doe");
@@ -149,17 +154,38 @@ public class UserDTOTest {
         Assert.assertEquals(user.getRoles()[0].getSchool(), "12345");
         Assert.assertEquals(user.getRoles()[0].getGroup(), "7C");
         Assert.assertEquals(user.getRoles()[0].getMunicipality(), "Great City");
+        Assert.assertNull(user.getRoles()[0].getGroupLevel());
         Assert.assertEquals(user.getAttributes().length, 1);
         Assert.assertEquals(user.getAttributes()[0].getName(), "google");
         Assert.assertEquals(user.getAttributes()[0].getValue(), "11XxjGZOeAyNqwTdq0Xec9ydDhYoq5CHrTQXHHSfGWM=");
+    }
+    
+    /**
+     * Tests parsing of a single user data transfer object with one role (student) and one attribute.
+     */
+    @Test
+    public void testUserDTOFromJson_whenOneStudentRoleOneAttribute_shouldReturnUserDTOWithStudentRole() {
+        UserDTO user = getUser("student-1role-1attr.json");
+        Assert.assertEquals(user.getUsername(), "OID1");
+        Assert.assertEquals(user.getFirstName(), "Jane");
+        Assert.assertEquals(user.getLastName(), "Doe");
+        Assert.assertEquals(user.getRoles().length, 1);
+        Assert.assertEquals(user.getRoles()[0].getRole(), "student");
+        Assert.assertEquals(user.getRoles()[0].getSchool(), "12345");
+        Assert.assertEquals(user.getRoles()[0].getGroup(), "7C");
+        Assert.assertEquals(user.getRoles()[0].getMunicipality(), "Great City");
+        Assert.assertEquals(user.getRoles()[0].getGroupLevel().intValue(), 7);
+        Assert.assertEquals(user.getAttributes().length, 1);
+        Assert.assertEquals(user.getAttributes()[0].getName(), "learnerId");
+        Assert.assertEquals(user.getAttributes()[0].getValue(), "1.2.246.562.24.10000000008");
     }
 
     /**
      * Tests parsing of a single user data transfer object with two roles and two attributes.
      */
     @Test
-    public void testTwoRoleTwoAttribute() {
-        UserDTO user = getUser("user-2role-2attr.json");
+    public void testUserDTOFromJson_whenTwoTeacherRolesTwoAttribute_shouldReturnUserDTOWithTwoTeacherRoles() {
+        UserDTO user = getUser("teacher-2role-2attr.json");
         Assert.assertEquals(user.getUsername(), "OID1");
         Assert.assertEquals(user.getFirstName(), "John");
         Assert.assertEquals(user.getLastName(), "Doe");
@@ -168,15 +194,36 @@ public class UserDTOTest {
         Assert.assertEquals(user.getRoles()[0].getSchool(), "12345");
         Assert.assertEquals(user.getRoles()[0].getGroup(), "7C");
         Assert.assertEquals(user.getRoles()[0].getMunicipality(), "Great City");
+        Assert.assertNull(user.getRoles()[0].getGroupLevel());
         Assert.assertEquals(user.getRoles()[1].getRole(), "teacher");
         Assert.assertEquals(user.getRoles()[1].getSchool(), "23456");
         Assert.assertEquals(user.getRoles()[1].getGroup(), "9B");
         Assert.assertEquals(user.getRoles()[1].getMunicipality(), "Rival City");
+        Assert.assertNull(user.getRoles()[1].getGroupLevel());
         Assert.assertEquals(user.getAttributes().length, 2);
         Assert.assertEquals(user.getAttributes()[0].getName(), "google");
         Assert.assertEquals(user.getAttributes()[0].getValue(), "11XxjGZOeAyNqwTdq0Xec9ydDhYoq5CHrTQXHHSfGWM=");
         Assert.assertEquals(user.getAttributes()[1].getName(), "twitter");
         Assert.assertEquals(user.getAttributes()[1].getValue(), "88XxjGZOeAyNqwTdq0Xec9ydDhYoq5CHrTQXHHSfGWM=");
+    }
+    
+    /**
+     * Tests parsing of a single user data transfer object with invalid group level.
+     */
+    @Test
+    public void testUserDTOFromJson_whenStudentRoleWithInvalidGroupLevel_shouldReturnUserDTOWithoutGroupLevel() {
+    	UserDTO user = getUser("student-1role-1attr-invalidGroupLevel.json");
+    	Assert.assertEquals(user.getUsername(), "OID1");
+        Assert.assertEquals(user.getFirstName(), "Jane");
+        Assert.assertEquals(user.getLastName(), "Doe");
+        Assert.assertEquals(user.getRoles().length, 1);
+        Assert.assertEquals(user.getRoles()[0].getRole(), "student");
+        Assert.assertEquals(user.getRoles()[0].getSchool(), "12345");
+        Assert.assertEquals(user.getRoles()[0].getGroup(), "7C");
+        Assert.assertEquals(user.getRoles()[0].getMunicipality(), "Great City");
+        Assert.assertNull(user.getRoles()[0].getGroupLevel());
+        Assert.assertEquals(user.getAttributes()[0].getName(), "learnerId");
+        Assert.assertEquals(user.getAttributes()[0].getValue(), "1.2.246.562.24.10000000008");
     }
 
     /**
@@ -186,7 +233,9 @@ public class UserDTOTest {
      * @return The user object.
      */
     protected UserDTO getUser(String classResource) {
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder()
+        		.registerTypeAdapter(RolesDTO.class, new RolesTypeAdapter())
+        		.create();
         Reader reader = new InputStreamReader(this.getClass().getResourceAsStream(classResource));
         return gson.fromJson(reader, UserDTO.class);
     }
