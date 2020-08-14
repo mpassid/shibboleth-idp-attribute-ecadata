@@ -161,6 +161,46 @@ public class UserDTOTest {
     }
     
     /**
+     * Tests parsing of a single user data transfer object with one role (teacher) and one attribute with group set to null.
+     */
+    @Test
+    public void testUserDTOFromJson_whenOneTeacherRoleOneAttributeGroupNull_shouldReturnUserDTOWithTeacherRole() {
+        UserDTO user = getUser("teacher-1role-1attr2.json");
+        Assert.assertEquals(user.getUsername(), "OID1");
+        Assert.assertEquals(user.getFirstName(), "John");
+        Assert.assertEquals(user.getLastName(), "Doe");
+        Assert.assertEquals(user.getRoles().length, 1);
+        Assert.assertEquals(user.getRoles()[0].getRole(), "teacher");
+        Assert.assertEquals(user.getRoles()[0].getSchool(), "12345");
+        Assert.assertEquals(user.getRoles()[0].getGroup(), null);
+        Assert.assertEquals(user.getRoles()[0].getMunicipality(), "Great City");
+        Assert.assertNull(user.getRoles()[0].getGroupLevel());
+        Assert.assertEquals(user.getAttributes().length, 1);
+        Assert.assertEquals(user.getAttributes()[0].getName(), "google");
+        Assert.assertEquals(user.getAttributes()[0].getValue(), "11XxjGZOeAyNqwTdq0Xec9ydDhYoq5CHrTQXHHSfGWM=");
+    }
+    
+    /**
+     * Tests parsing of a single user data transfer object with one role (teacher) and one attribute with group set to null.
+     */
+    @Test
+    public void testUserDTOFromJson_whenOneTeacherRoleOneAttributeRolesAttributesNull_shouldReturnUserDTOWithTeacherRole() {
+        UserDTO user = getUser("teacher-1role-1attr3.json");
+        Assert.assertEquals(user.getUsername(), "OID1");
+        Assert.assertEquals(user.getFirstName(), "John");
+        Assert.assertEquals(user.getLastName(), "Doe");
+        Assert.assertEquals(user.getRoles().length, 1);
+        Assert.assertEquals(user.getRoles()[0].getRole(), null);
+        Assert.assertEquals(user.getRoles()[0].getSchool(), null);
+        Assert.assertEquals(user.getRoles()[0].getGroup(), null);
+        Assert.assertEquals(user.getRoles()[0].getMunicipality(), null);
+        Assert.assertNull(user.getRoles()[0].getGroupLevel());
+        Assert.assertEquals(user.getAttributes().length, 1);
+        Assert.assertEquals(user.getAttributes()[0].getName(), "google");
+        Assert.assertEquals(user.getAttributes()[0].getValue(), "11XxjGZOeAyNqwTdq0Xec9ydDhYoq5CHrTQXHHSfGWM=");
+    }
+    
+    /**
      * Tests parsing of a single user data transfer object with one role (student) and one attribute.
      */
     @Test

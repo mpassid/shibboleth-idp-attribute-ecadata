@@ -37,19 +37,6 @@ import java.util.Map;
 
 import javax.security.auth.Subject;
 
-import net.shibboleth.idp.attribute.IdPAttribute;
-import net.shibboleth.idp.attribute.IdPAttributeValue;
-import net.shibboleth.idp.attribute.StringAttributeValue;
-import net.shibboleth.idp.attribute.resolver.AttributeDefinition;
-import net.shibboleth.idp.attribute.resolver.ResolutionException;
-import net.shibboleth.idp.attribute.resolver.context.AttributeResolutionContext;
-import net.shibboleth.idp.attribute.resolver.context.AttributeResolverWorkContext;
-import net.shibboleth.idp.authn.AuthenticationResult;
-import net.shibboleth.idp.authn.context.AuthenticationContext;
-import net.shibboleth.idp.saml.impl.TestSources;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import net.shibboleth.utilities.java.support.httpclient.HttpClientBuilder;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
@@ -74,9 +61,20 @@ import org.testng.annotations.Test;
 
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
-import fi.mpass.shibboleth.attribute.resolver.dc.impl.RestDataConnector;
 import fi.mpass.shibboleth.attribute.resolver.spring.dc.RestDataConnectorParserTest;
 import fi.mpass.shibboleth.authn.principal.impl.ShibAttributePrincipal;
+import net.shibboleth.idp.attribute.IdPAttribute;
+import net.shibboleth.idp.attribute.IdPAttributeValue;
+import net.shibboleth.idp.attribute.StringAttributeValue;
+import net.shibboleth.idp.attribute.resolver.AttributeDefinition;
+import net.shibboleth.idp.attribute.resolver.ResolutionException;
+import net.shibboleth.idp.attribute.resolver.context.AttributeResolutionContext;
+import net.shibboleth.idp.attribute.resolver.context.AttributeResolverWorkContext;
+import net.shibboleth.idp.authn.AuthenticationResult;
+import net.shibboleth.idp.authn.context.AuthenticationContext;
+import net.shibboleth.idp.saml.impl.TestSources;
+import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
+import net.shibboleth.utilities.java.support.httpclient.HttpClientBuilder;
 
 /**
  * Unit tests for {@link RestDataConnector}.
@@ -221,6 +219,45 @@ public class RestDataConnectorTest {
         Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
         Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID), null);
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
+    }
+    
+    /**
+     * Tests {@link RestDataConnector} with minimum configuration, with one teacher role with grouop null for the user.
+     * 
+     * @throws ComponentInitializationException If component cannot be initialized.
+     * @throws ResolutionException If attribute resolution fails.
+     */
+    @Test
+    public void testResolveAttributes_whenOneTeacherRoleWithGroupNull_shouldReturnValidUserDTO() 
+    		throws ComponentInitializationException, ResolutionException, Exception {
+        final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-1role-1attr2.json", 
+                "restdc-min.xml");
+        Assert.assertEquals(resolvedAttributes.size(), 9);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUPS));
+    }
+    
+    /**
+     * Tests {@link RestDataConnector} with minimum configuration, with one teacher role with 
+     * multiple null value attributes for the user.
+     * 
+     * @throws ComponentInitializationException If component cannot be initialized.
+     * @throws ResolutionException If attribute resolution fails.
+     */
+    @Test
+    public void testResolveAttributes_whenOneTeacherRoleWithMultipleNullAttributes_shouldReturnValidUserDTO() 
+    		throws ComponentInitializationException, ResolutionException, Exception {
+        final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-1role-1attr3.json", 
+                "restdc-min.xml");
+        Assert.assertEquals(resolvedAttributes.size(), 6);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUPS));
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_ROLES));
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_MUNICIPALITIES));
     }
     
     /**

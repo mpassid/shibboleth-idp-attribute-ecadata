@@ -1,0 +1,19 @@
+{
+    "username": "OID1",
+    "first_name": "John",
+    "last_name": "Doe",
+    "roles": [
+        { 
+            "role": "teacher",
+            "school": "12345",
+            "group": null,
+            "municipality": "Great City"
+        }
+    ],
+    "attributes": [
+        {
+            "name": "google",
+            "value": "11XxjGZOeAyNqwTdq0Xec9ydDhYoq5CHrTQXHHSfGWM="
+        }
+    ]
+}

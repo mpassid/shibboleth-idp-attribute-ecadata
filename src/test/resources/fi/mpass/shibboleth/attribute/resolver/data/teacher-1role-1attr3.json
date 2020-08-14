@@ -1,0 +1,20 @@
+{
+    "username": "OID1",
+    "first_name": "John",
+    "last_name": "Doe",
+    "roles": [
+        { 
+            "role": null,
+            "school": null,
+            "group": null,
+            "groupLevel": null,
+            "municipality": null
+        }
+    ],
+    "attributes": [
+        {
+            "name": "google",
+            "value": "11XxjGZOeAyNqwTdq0Xec9ydDhYoq5CHrTQXHHSfGWM="
+        }
+    ]
+}

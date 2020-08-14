@@ -13,16 +13,21 @@ import com.google.gson.stream.JsonWriter;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
 
 /**
- * This class defines the {@link TypeAdapter} needed when deserializing {@link RolesDTO} from Json.
+ * Converts {@link RolesDTO} object to and from JSON. Class extends {@link TypeAdapter}.
  */
 public class RolesTypeAdapter extends TypeAdapter<RolesDTO>{
 	
 	private final Logger logger = LoggerFactory.getLogger(RolesTypeAdapter.class);
 
+	/**
+	 * Writes one RolesDTO object for value.
+	 * 
+	 * @param roles the {@link RolesDTO} object to write. May be null.
+	 */
 	@Override
 	public void write(JsonWriter out, RolesDTO roles) throws IOException {
 		out.beginObject();
-		out.name("shcool");
+		out.name("school");
 		out.value(roles.getSchool());
 		out.name("role");
 		out.value(roles.getRole());
@@ -34,6 +39,12 @@ public class RolesTypeAdapter extends TypeAdapter<RolesDTO>{
 		out.value(roles.getMunicipality());
 	}
 	
+	/**
+	 * Reads one JSON value and converts it to a {@link RolesDTO} object. Null values are skipped.
+	 * 
+	 * @return the converted {@link RolesDTO} object.
+	 * @throws IOExection
+	 */
 	@Override
 	public RolesDTO read(JsonReader in) throws IOException {
 		
@@ -43,45 +54,34 @@ public class RolesTypeAdapter extends TypeAdapter<RolesDTO>{
 		String fieldName = null;
 		
 		while (in.hasNext()) {
-			JsonToken token = in.peek();
 			
-			if (token.equals(JsonToken.NAME)) {
+			if (in.peek() == JsonToken.NAME) {
 				fieldName = in.nextName();
 			}
 			
-			if ("school".equals(fieldName)) {
-				token = in.peek();
-				roles.setSchool(in.nextString());
+			if (in.peek() == JsonToken.NULL) {
+				in.nextNull();
+				continue;
 			}
 			
-			if ("role".equals(fieldName)) {
-				token = in.peek();
-				roles.setRole(in.nextString());
-			}
-			
-			if ("group".equals(fieldName)) {
-				token = in.peek();
-				roles.setGroup(in.nextString());
-			}
-			
-			if ("groupLevel".equals(fieldName)) {
-				token = in.peek();
-				try {
-					roles.setGroupLevel(in.nextInt());
+			switch(fieldName) {
+				case "school" : { roles.setSchool(in.nextString()); break; }
+				case "role" : { roles.setRole(in.nextString()); break; }
+				case "group" : { roles.setGroup(in.nextString()); break; }
+				case "groupLevel" : { 
+					try {
+						roles.setGroupLevel(in.nextInt());
+					}
+					catch (IllegalStateException | NumberFormatException e) {
+						logger.warn("Group level is not int: {}", in.nextString());
+					};
+					break;
 				}
-				catch (IllegalStateException | NumberFormatException e) {
-					logger.warn("Group level is not int: {}", in.nextString());
-				};
-			}
-			
-			if ("municipality".equals(fieldName)) {
-				token = in.peek();
-				roles.setMunicipality(in.nextString());
+				case "municipality" : { roles.setMunicipality(in.nextString()); break; }
 			}
 		}
 		
 		in.endObject();
 		return roles;
 	}
-
 }

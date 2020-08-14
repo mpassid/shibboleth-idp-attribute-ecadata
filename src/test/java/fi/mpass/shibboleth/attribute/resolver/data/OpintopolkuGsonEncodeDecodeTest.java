@@ -28,9 +28,6 @@ import org.testng.annotations.Test;
 
 import com.google.gson.Gson;
 
-import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosDTO;
-import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosMetadataDTO;
-
 /**
  * Unit tests for {@link OpintopolkuOppilaitosDTO} and {@link OpintopolkuOppilaitosMetadataDTO}.
  */

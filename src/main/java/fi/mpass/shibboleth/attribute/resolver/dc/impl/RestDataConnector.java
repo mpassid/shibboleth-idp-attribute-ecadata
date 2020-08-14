@@ -111,7 +111,7 @@ public class RestDataConnector extends AbstractDataConnector {
     /** The attribute id for the groups. */
     public static final String ATTR_ID_GROUPS = "groups";
 
-    /** The attribute id for the groups. */
+    /** The attribute id for the group levels. */
     public static final String ATTR_ID_GROUP_LEVELS = "groupLevels";
 
     /** The attribute id for the schools. */
