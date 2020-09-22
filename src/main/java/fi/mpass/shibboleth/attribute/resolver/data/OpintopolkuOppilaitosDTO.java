@@ -45,6 +45,10 @@ public class OpintopolkuOppilaitosDTO {
     @SerializedName("koodiArvo")
     private String codeValue;
     
+    private String parentOid;
+
+	private String parentName;
+    
     /**
      * Set the code URI value.
      * @param newCodeUri What to set.
@@ -108,4 +112,20 @@ public class OpintopolkuOppilaitosDTO {
     public String getVersion() {
         return version;
     }
+    
+    public String getParentOid() {
+		return parentOid;
+	}
+    
+    public void setParentOid(String parentOid) {
+		this.parentOid = parentOid;
+	}
+
+	public String getParentName() {
+		return parentName;
+	}
+
+	public void setParentName(String parentName) {
+		this.parentName = parentName;
+	}
 }

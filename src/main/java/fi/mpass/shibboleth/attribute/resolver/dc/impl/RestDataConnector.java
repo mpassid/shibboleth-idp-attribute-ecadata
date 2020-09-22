@@ -63,6 +63,7 @@ import com.google.gson.JsonSyntaxException;
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosMetadataDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.RolesTypeAdapter;
+import fi.mpass.shibboleth.attribute.resolver.data.School;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.AttributesDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
@@ -71,7 +72,6 @@ import net.shibboleth.idp.attribute.IdPAttribute;
 import net.shibboleth.idp.attribute.IdPAttributeValue;
 import net.shibboleth.idp.attribute.StringAttributeValue;
 import net.shibboleth.idp.attribute.resolver.AbstractDataConnector;
-import net.shibboleth.idp.attribute.resolver.DataConnector;
 import net.shibboleth.idp.attribute.resolver.ResolutionException;
 import net.shibboleth.idp.attribute.resolver.ResolvedAttributeDefinition;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolutionContext;
@@ -137,6 +137,12 @@ public class RestDataConnector extends AbstractDataConnector {
     
     /** The attribute id for the municipality code (only used with direct IdP attributes). */
     public static final String ATTR_ID_MUNICIPALITY_CODE = "municipalityCode";
+    
+    public static final String ATTR_ID_EDUCATION_PROVIDER_OID = "educationProviderOids";
+    
+    public static final String ATTR_ID_EDUCATION_PROVIDER_NAME = "educationProviderNames";
+    
+    // TODO: Tähän pitäisi lisätä education provider oid ja education provider name 
     
     /** The default base URL for fetching school info. */
     public static final String DEFAULT_BASE_URL_SCHOOL_INFO = 
@@ -480,19 +486,21 @@ public class RestDataConnector extends AbstractDataConnector {
         if (ecaUser.getRoles() != null) {
             for (int i = 0; i < ecaUser.getRoles().length; i++) {
                 final String rawSchool = ecaUser.getRoles()[i].getSchool();
-                final String mappedSchool = getSchoolName(rawSchool, nameApiBaseUrl);
-                if (mappedSchool == null) {
+                final School school = getSchool(rawSchool, nameApiBaseUrl);
+                if (school == null) {
                     if (StringUtils.isNumeric(rawSchool)) {
                         populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);                        
                         populateStructuredRole(attributes, "", rawSchool, ecaUser.getRoles()[i]);
                     } else {                        
-                        populateAttribute(attributes, ATTR_ID_SCHOOLS, rawSchool);                    
+                        populateAttribute(attributes, ATTR_ID_SCHOOLS, rawSchool);                
                         populateStructuredRole(attributes, rawSchool, "", ecaUser.getRoles()[i]);
                     }
                 } else {
-                    populateAttribute(attributes, ATTR_ID_SCHOOLS, mappedSchool);
+                	populateAttribute(attributes, ATTR_ID_SCHOOLS, school.getName());
+                	populateAttribute(attributes, ATTR_ID_EDUCATION_PROVIDER_OID, school.getParentOid());
+                	populateAttribute(attributes, ATTR_ID_EDUCATION_PROVIDER_NAME, school.getParentName());
                     populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);
-                    populateStructuredRole(attributes, mappedSchool, rawSchool, ecaUser.getRoles()[i]);
+                    populateStructuredRole(attributes, school.getName(), rawSchool, ecaUser.getRoles()[i]);
                 }
                 populateAttribute(attributes, ATTR_ID_GROUPS, ecaUser.getRoles()[i].getGroup());
                 populateAttribute(attributes, ATTR_ID_ROLES, ecaUser.getRoles()[i].getRole());
@@ -527,6 +535,7 @@ public class RestDataConnector extends AbstractDataConnector {
         final String municipality = role.getMunicipality() != null ? role.getMunicipality() : "";
         final String structuredRole = municipality + ";" + school + ";" + group + ";" + aRole;
         populateAttribute(attributes, ATTR_ID_STRUCTURED_ROLES, structuredRole);
+        
         final String structuredRoleWid = municipality + ";" + schoolId + ";" + group + ";" + aRole;
         populateAttribute(attributes, ATTR_ID_STRUCTURED_ROLES_WID, structuredRoleWid);
     }
@@ -756,16 +765,17 @@ public class RestDataConnector extends AbstractDataConnector {
     protected synchronized HttpClient buildClient() throws Exception {
         return getHttpClientBuilder().buildClient();
     }
-    
+
     /**
-     * Fetch school name from external API.
+     * Fetch school information from external API.
      * @param clientBuilder The HTTP client builder.
      * @param id The school id whose information is fetched.
      * @param baseUrl The base URL for the external API. It is appended with the ID of the school.
-     * @return The name of the school.
+     * @return The school object.
      */
-    public String getSchoolName(final String id, final String baseUrl) {
+    public School getSchool(final String id, final String baseUrl) {
         final Logger log = LoggerFactory.getLogger(RestDataConnector.class);
+        
         if (StringSupport.trimOrNull(id) == null || !StringUtils.isNumeric(id) || id.length() > 6) {
             return null;
         }
@@ -793,22 +803,30 @@ public class RestDataConnector extends AbstractDataConnector {
             log.error("Could not parse school information response with id {}", id, e);
             return null;
         } finally {
-            EntityUtils.consumeQuietly(response.getEntity());
+        	EntityUtils.consumeQuietly(response.getEntity());
         }
         log.trace("Fetched the following response body: {}", output);
         final Gson gson = new Gson();
         try {
             final OpintopolkuOppilaitosDTO[] oResponse = gson.fromJson(output, OpintopolkuOppilaitosDTO[].class);
             if (oResponse.length == 1 && oResponse[0].getMetadata() != null && oResponse[0].getMetadata().length > 0) {
-                log.debug("Successfully fetched name for id {}", id);
-                
+                log.debug("Successfully fetched information for id {}", id);
+                School school = new School();
+                school.setId(id);
                 for (OpintopolkuOppilaitosMetadataDTO metadata : oResponse[0].getMetadata()) {
             		if ("FI".equals(metadata.getLanguage())) {
-            			return metadata.getName();
+            			school.setName(metadata.getName());
             		}
             	}
                 
-                return oResponse[0].getMetadata()[0].getName();
+                if (null == school.getName()) {
+                	school.setName(oResponse[0].getMetadata()[0].getName());
+                }
+                
+                school.setParentOid(oResponse[0].getParentOid());
+                school.setParentName(oResponse[0].getParentName());
+                
+                return school;
             }
         } catch (JsonSyntaxException | IllegalStateException e) {
             log.warn("Could not parse the response", e);
@@ -817,5 +835,4 @@ public class RestDataConnector extends AbstractDataConnector {
         log.warn("Could not find name for id {}", id);
         return null;
     }
-
 }

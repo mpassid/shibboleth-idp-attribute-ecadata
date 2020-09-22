@@ -23,6 +23,9 @@
 
 package fi.mpass.shibboleth.attribute.resolver.dc.impl;
 
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,6 +62,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import fi.mpass.shibboleth.attribute.resolver.data.School;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
 import fi.mpass.shibboleth.attribute.resolver.spring.dc.RestDataConnectorParserTest;
@@ -108,7 +112,22 @@ public class RestDataConnectorTest {
     /** The expected resolved learnerId after successful resolution. */
     private String expectedLearnerId;
     
+    /** The expected school ids values. */
+    private String expectedSchoolId;
+    private String expectedSchoolId2;
 
+    /** The expected school names values. */
+    private String expectedSchoolName;
+    private String expectedSchoolName2;
+    
+    /** The expected parent oids values. */
+    private String expectedParentOid;
+    private String expectedParentOid2;
+
+    /** The expected parent names values. */
+    private String expectedParentName;
+    private String expectedParentName2;
+    
     /**
      * Initialize unit tests.
      */
@@ -122,6 +141,14 @@ public class RestDataConnectorTest {
         expectedToken = "testingToken";
         expectedOid = "OID1";
         expectedLearnerId = "1.2.246.562.24.10000000008";
+        expectedSchoolId = "12345";
+        expectedSchoolName = "Mock School Name";
+        expectedParentOid = "1.2.246.562.10.10000000001";
+        expectedParentName = "Mock Education Provider Name";
+        expectedSchoolId2 = "23456";
+        expectedSchoolName2 = "Mock School Name 2";
+        expectedParentOid2 = "1.2.246.562.10.10000000002";
+        expectedParentName2 = "Mock Education Provider Name 2";
     }
     
     /**
@@ -215,14 +242,14 @@ public class RestDataConnectorTest {
     		throws ComponentInitializationException, ResolutionException, Exception {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-1role-1attr.json", 
                 "restdc-min.xml");
-        Assert.assertEquals(resolvedAttributes.size(), 10);
+        Assert.assertEquals(resolvedAttributes.size(), 13);
         Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
-        Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID), null);
+        Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
     }
     
     /**
-     * Tests {@link RestDataConnector} with minimum configuration, with one teacher role with grouop null for the user.
+     * Tests {@link RestDataConnector} with minimum configuration, with one teacher role with group null for the user.
      * 
      * @throws ComponentInitializationException If component cannot be initialized.
      * @throws ResolutionException If attribute resolution fails.
@@ -232,7 +259,7 @@ public class RestDataConnectorTest {
     		throws ComponentInitializationException, ResolutionException, Exception {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-1role-1attr2.json", 
                 "restdc-min.xml");
-        Assert.assertEquals(resolvedAttributes.size(), 9);
+        Assert.assertEquals(resolvedAttributes.size(), 12);
         Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
         Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
@@ -271,12 +298,21 @@ public class RestDataConnectorTest {
     		throws ComponentInitializationException, ResolutionException, Exception {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-1attr.json", 
                 "restdc-min.xml");
-        Assert.assertEquals(resolvedAttributes.size(), 11);
+        Assert.assertEquals(resolvedAttributes.size(), 14);
         Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        
         final List<IdPAttributeValue<?>> groupLevels 
             = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS).getValues();
         Assert.assertTrue(verifyAttributeValueExists(groupLevels, "7"));
         Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0).getValue(), expectedLearnerId);
+        
+        final List<IdPAttributeValue<?>> educationProviderOids = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_OID).getValues();
+        Assert.assertEquals(educationProviderOids.size(), 1);
+        Assert.assertTrue(verifyAttributeValueExists( educationProviderOids, expectedParentOid));
+        
+        final List<IdPAttributeValue<?>> educationProviderNames = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_NAME).getValues();
+        Assert.assertEquals(educationProviderNames.size(), 1);
+        Assert.assertTrue(verifyAttributeValueExists( educationProviderNames, expectedParentName));
     }
     
     /**
@@ -290,12 +326,37 @@ public class RestDataConnectorTest {
     		throws ComponentInitializationException, ResolutionException, Exception {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-1attr-invalidGroupLevel.json", 
                 "restdc-min.xml");
-        Assert.assertEquals(resolvedAttributes.size(), 10);
+        Assert.assertEquals(resolvedAttributes.size(), 13);
         Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
         Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0).getValue(), expectedLearnerId);
     }
 
+    /**
+     * Tests {@link RestDataConnector} with minimum configuration, with one student role for the user.
+     * 
+     * @throws ComponentInitializationException If component cannot be initialized.
+     * @throws ResolutionException If attribute resolution fails.
+     */
+    @Test
+    public void testResolveAttributes_whenOneStudentRoleWithSchoolMissing_shouldReturnValidUserDTOWithoutGroupLevel() 
+    		throws ComponentInitializationException, ResolutionException, Exception {
+        final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-1attr-school-missing.json", 
+                "restdc-min.xml");
+        Assert.assertEquals(resolvedAttributes.size(), 11);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_SCHOOL_IDS));
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_OID));
+        Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_NAME));
+        final List<IdPAttributeValue<?>> groups = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUPS).getValues();
+        Assert.assertEquals(groups.size(), 1);
+        Assert.assertEquals(groups.get(0).getValue(), "7C");
+        final List<IdPAttributeValue<?>> groupLevels = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS).getValues();
+        Assert.assertEquals(groupLevels.size(), 1);
+        Assert.assertEquals(groupLevels.get(0).getValue(), "7");
+        Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0).getValue(), expectedLearnerId);
+    }
+    
     /**
      * Tests {@link RestDataConnector} with minimum configuration, with two teacher roles for the user.
      * 
@@ -306,7 +367,7 @@ public class RestDataConnectorTest {
     public void testResolveAttributes_whenTwoTeacherRolesTwoAttributes_shouldReturnValidUserDTO() throws ComponentInitializationException, ResolutionException, Exception {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-2role-2attr.json", 
                 "restdc-min.xml");
-        Assert.assertEquals(resolvedAttributes.size(), 11);
+        Assert.assertEquals(resolvedAttributes.size(), 14);
         Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_LEARNER_ID));
@@ -322,12 +383,21 @@ public class RestDataConnectorTest {
     public void testResolveAttributes_whenTwoStudentRoles_shouldReturnValidUserDTOWithStudentRole() throws ComponentInitializationException, ResolutionException, Exception {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-2role-2attr.json", 
                 "restdc-min.xml");
-        Assert.assertEquals(resolvedAttributes.size(), 12);
+        Assert.assertEquals(resolvedAttributes.size(), 15);
         Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        
         final List<IdPAttributeValue<?>> groupLevels 
             = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS).getValues();
         Assert.assertEquals(groupLevels.size(), 2);
         Assert.assertTrue(verifyAttributeValueExists(groupLevels, "7", "9"));
+        
+        final List<IdPAttributeValue<?>> educationProviderOids = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_OID).getValues();
+        Assert.assertEquals(educationProviderOids.size(), 2);
+        Assert.assertTrue(verifyAttributeValueExists( educationProviderOids, expectedParentOid, expectedParentOid2));
+        
+        final List<IdPAttributeValue<?>> educationProviderNames = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_NAME).getValues();
+        Assert.assertEquals(educationProviderNames.size(), 2);
+        Assert.assertTrue(verifyAttributeValueExists( educationProviderNames, expectedParentName, expectedParentName2));
     }
     
     /**
@@ -386,13 +456,20 @@ public class RestDataConnectorTest {
         recordWorkContextAttribute(expectedIdpId, "idpIdValue", workContext);
         RestDataConnector mockConnector = Mockito.spy(dataConnector);
         Mockito.doReturn(mockBuilder).when(mockConnector).getHttpClientBuilder();
+        
+        School mockSchool = new School(expectedSchoolId, expectedSchoolName, expectedParentOid, expectedParentName);
+        Mockito.when(mockConnector.getSchool(eq(expectedSchoolId), anyString())).thenReturn(mockSchool);
+
+        School mockSchool2 =new School(expectedSchoolId2, expectedSchoolName2, expectedParentOid2, expectedParentName2);
+        Mockito.when(mockConnector.getSchool(eq(expectedSchoolId2), anyString())).thenReturn(mockSchool2);
+        
         testSettings(dataConnector, false, "");
         return mockConnector.doResolve(context, workContext);
     }
     
     @Test
     public void testPrincipals() throws Exception {
-        Map<String, IdPAttribute> attrs = resolveAttributes("restdc-full.xml", new ShibAttributePrincipal("uid", "uidValue"), new ShibAttributePrincipal("schoolId", "00200"), new ShibAttributePrincipal("role", "Opettaja"));
+        Map<String, IdPAttribute> attrs = resolveAttributes("restdc-full.xml", new ShibAttributePrincipal("uid", "uidValue"), new ShibAttributePrincipal("schoolId", expectedSchoolId), new ShibAttributePrincipal("role", "Opettaja"));
         Assert.assertEquals(attrs.keySet().size(), 7);
     }
     
@@ -479,24 +556,23 @@ public class RestDataConnectorTest {
     }
     
     @Test
-    public void testNullSchoolName() {
-        Assert.assertNull(new RestDataConnector().getSchoolName(null, null));
+    public void testGetSchool_whenNull_thenShouldReturnNull() {
+    	Assert.assertNull(new RestDataConnector().getSchool(null, null));
     }
 
     @Test
-    public void testEmptySchoolName() {
-        Assert.assertNull(new RestDataConnector().getSchoolName("", null));
+    public void testGetSchool_whenEmpty_thenShouldReturnNull() {
+    	Assert.assertNull(new RestDataConnector().getSchool("", null));
     }
 
     @Test
-    public void testNonNumericSchoolName() {
-        Assert.assertNull(new RestDataConnector().getSchoolName("mock", null));
+    public void testGetSchool_whenNonNumericSchoolId_thenShouldReturnNull() {
+    	Assert.assertNull(new RestDataConnector().getSchool("mock", null));
     }
 
     @Test
-    public void testLongSchoolName() {
-        RestDataConnector c = new RestDataConnector();
-        Assert.assertNull(new RestDataConnector().getSchoolName("1234567", null));
+    public void testGetSchool_whenTooLongSchoolId_thenShouldReturnNull() {
+    	Assert.assertNull(new RestDataConnector().getSchool("1234567", null));
     }
 
     @Test
@@ -506,65 +582,146 @@ public class RestDataConnectorTest {
         Mockito.when(mockClient.execute((HttpUriRequest)Mockito.any())).thenThrow(new IOException("mock"));
         Mockito.when(clientBuilder.buildClient()).thenReturn(mockClient);
         final RestDataConnector connector = new RestDataConnector(clientBuilder);
-        final String name = connector.getSchoolName("123456", "http://localhost/");
-        Assert.assertNull(name);
+        School school = connector.getSchool("123456", "http://localhost/");
+        Assert.assertNull(school);
+    }
+    
+    @Test
+    public void testGetSchool_withServer_whenRestReturnsEmptyArray_thenShouldNotReturnSchool() throws Exception {
+    	final School school = executeWithServer("[]");
+    	Assert.assertNull(school);
+    }
+    
+    @Test
+    public void testGetSchool_withServer_whenNoMetadata_thenShouldReturnNull() throws Exception {
+    	final String json = "[\n" + 
+        		"    {\n" + 
+        		"        \"koodiUri\":\"oppilaitosnumero_12345\",\n" + 
+        		"        \"versio\": 1,\n" + 
+        		"        \"koodiArvo\": \"12345\",\n" + 
+        		"        \"parentOid\": \"1.2.246.562.10.10000000001\",\n" + 
+        		"        \"parentName\": \"Mock Education Provider Name\"\n" + 
+        		"    }\n" + 
+        		"]";
+    	final School school = executeWithServer(json);
+        Assert.assertNull(school);
+    }
+    
+    @Test
+    public void testGetSchool_withServer_whenEmptyMetadata_thenShouldReturnNull() throws Exception {
+    	final String json = "[\n" + 
+        		"    {\n" + 
+        		"        \"koodiUri\":\"oppilaitosnumero_12345\",\n" + 
+        		"        \"metadata\": [],\n" + 
+        		"        \"versio\": 1,\n" + 
+        		"        \"koodiArvo\": \"12345\",\n" + 
+        		"        \"parentOid\": \"1.2.246.562.10.10000000001\",\n" + 
+        		"        \"parentName\": \"Mock Education Provider Name\"\n" + 
+        		"    }\n" + 
+        		"]";
+        final School school = executeWithServer(json);
+        Assert.assertNull(school);
+    }
+    
+    @Test
+    public void testGetSchool_withServer_whenOneLanguageInMetadata_thenShouldReturnSchool() throws Exception {
+        final String json = "[\n" + 
+        		"    {\n" + 
+        		"        \"koodiUri\":\"oppilaitosnumero_12345\",\n" + 
+        		"        \"metadata\": [\n" + 
+        		"            {\n" + 
+        		"                \"nimi\": \"Mock School Name\",\n" + 
+        		"                \"lyhytNimi\": \"Mock Short\",\n" + 
+        		"                \"kieli\": \"FI\"\n" + 
+        		"            }\n" + 
+        		"        ],\n" + 
+        		"        \"versio\": 1,\n" + 
+        		"        \"koodiArvo\": \"12345\",\n" + 
+        		"        \"parentOid\": \"1.2.246.562.10.10000000001\",\n" + 
+        		"        \"parentName\": \"Mock Education Provider Name\"\n" + 
+        		"    }\n" + 
+        		"]";
+        final School school = executeWithServer(json);
+        Assert.assertNotNull(school);
+        Assert.assertEquals(school.getName(), expectedSchoolName);
+        Assert.assertEquals(school.getId(), expectedSchoolId);
+        Assert.assertEquals(school.getParentOid(), expectedParentOid);
+        Assert.assertEquals(school.getParentName(), expectedParentName);
+    }
+    
+    @Test
+    public void testGetSchool_withServer_WhenMultipleLanguagesInMetadata_ShouldReturnSchoolWithFIInformation() throws Exception {
+        final String json = "[\n" + 
+        		"    {\n" + 
+        		"        \"koodiUri\":\"oppilaitosnumero_12345\",\n" + 
+        		"        \"metadata\": [\n" + 
+        		"            {\n" + 
+        		"                \"nimi\": \"Mock skolanamn\",\n" + 
+        		"                \"lyhytNimi\": \"Mock Kort\",\n" + 
+        		"                \"kieli\": \"SV\"\n" + 
+        		"            },\n" + 
+        		"            {\n" + 
+        		"                \"nimi\": \"Mock koulun nimi\",\n" + 
+        		"                \"lyhytNimi\": \"Mock Lyhyt\",\n" + 
+        		"                \"kieli\": \"FI\"\n" + 
+        		"            },\n" + 
+        		"            {\n" + 
+        		"                \"nimi\": \"Mock School Name\",\n" + 
+        		"                \"lyhytNimi\": \"Mock Short\",\n" + 
+        		"                \"kieli\": \"EN\"\n" + 
+        		"            }\n" + 
+        		"        ],\n" + 
+        		"        \"versio\": 1,\n" + 
+        		"        \"koodiArvo\": \"12345\",\n" + 
+        		"        \"parentOid\": \"1.2.246.562.10.10000000001\",\n" + 
+        		"        \"parentName\": \"Mock Education Provider Name\"\n" + 
+        		"    }\n" + 
+        		"]";
+        final School school = executeWithServer(json);
+        Assert.assertNotNull(school);
+        Assert.assertEquals(school.getName(), "Mock koulun nimi");
+        Assert.assertEquals(school.getId(), expectedSchoolId);
+        Assert.assertEquals(school.getParentOid(), expectedParentOid);
+        Assert.assertEquals(school.getParentName(), expectedParentName);
+    }
+    
+    @Test
+    public void testGetSchool_withServer_MultipleLanguagesInMetadataNoFI_ShouldReturnSchoolWithFirstLanguageInMetadata() throws Exception {
+    	final String json = "[\n" + 
+        		"    {\n" + 
+        		"        \"koodiUri\":\"oppilaitosnumero_12345\",\n" + 
+        		"        \"metadata\": [\n" + 
+        		"            {\n" + 
+        		"                \"nimi\": \"Mock skolanamn\",\n" + 
+        		"                \"lyhytNimi\": \"Mock Kort\",\n" + 
+        		"                \"kieli\": \"SV\"\n" + 
+        		"            },\n" + 
+        		"            {\n" + 
+        		"                \"nimi\": \"Mock School Name\",\n" + 
+        		"                \"lyhytNimi\": \"Mock Short\",\n" + 
+        		"                \"kieli\": \"EN\"\n" + 
+        		"            }\n" + 
+        		"        ],\n" + 
+        		"        \"versio\": 1,\n" + 
+        		"        \"koodiArvo\": \"12345\",\n" + 
+        		"        \"parentOid\": \"1.2.246.562.10.10000000001\",\n" + 
+        		"        \"parentName\": \"Mock Education Provider Name\"\n" + 
+        		"    }\n" + 
+        		"]";
+        final School school = executeWithServer(json);
+        Assert.assertNotNull(school);
+        Assert.assertEquals(school.getName(), "Mock skolanamn");
+        Assert.assertEquals(school.getId(), expectedSchoolId);
+        Assert.assertEquals(school.getParentOid(), expectedParentOid);
+        Assert.assertEquals(school.getParentName(), expectedParentName);
+    	
     }
 
-    @Test
-    public void testSchoolNameEmptyArray() throws Exception {
-        final String name = executeWithServer("[]");
-        Assert.assertNull(name);
-    }
-    
-    @Test
-    public void testSchoolNameNoMetadata() throws Exception {
-        final String name = executeWithServer("[{\"koodiUri\":\"oppilaitosnumero_123456\"," +
-                "\"versio\":1,\"koodiArvo\":\"123456\"}]");
-        Assert.assertNull(name);
-    }
-    
-    @Test
-    public void testSchoolNameEmptyMetadata() throws Exception {
-        final String name = executeWithServer("[{\"koodiUri\":\"oppilaitosnumero_123456\",\"metadata\":" + 
-                "[],\"versio\":1,\"koodiArvo\":\"123456\"}]");
-        Assert.assertNull(name);
-    }
-    
-    @Test
-    public void testSchoolNameSuccess() throws Exception {
-        final String name = executeWithServer("[{\"koodiUri\":\"oppilaitosnumero_123456\",\"metadata\":" + 
-                "[{\"nimi\":\"Mock School Name\",\"lyhytNimi\":\"Mock Short\",\"kieli\":\"FI\"}]," +
-                "\"versio\":1,\"koodiArvo\":\"123456\"}]");
-        Assert.assertNotNull(name);
-        Assert.assertEquals(name, "Mock School Name");
-    }
-    
-    @Test
-    public void testSchoolNameMultipleLanguagesInMetadataSuccess() throws Exception {
-        final String name = executeWithServer("[{\"koodiUri\":\"oppilaitosnumero_123456\",\"metadata\": [" + 
-        		"{\"nimi\":\"Mock skolanamn\",\"lyhytNimi\":\"Mock Kort\",\"kieli\":\"SV\"}," + 
-        		"{\"nimi\":\"Mock koulun nimi\",\"lyhytNimi\":\"Mock Lyhyt\",\"kieli\":\"FI\"}," + 
-        		"{\"nimi\":\"Mock School Name\",\"lyhytNimi\":\"Mock Short\",\"kieli\":\"EN\"}]," + 
-        		"\"versio\":1,\"koodiArvo\":\"123456\"}]");
-        Assert.assertNotNull(name);
-        Assert.assertEquals(name, "Mock koulun nimi");
-    }
-    
-    @Test
-    public void testSchoolNameMultipleLanguagesInMetadataNoFISuccess() throws Exception {
-        final String name = executeWithServer("[{\"koodiUri\":\"oppilaitosnumero_123456\",\"metadata\": [" + 
-        		"{\"nimi\":\"Mock skolanamn\",\"lyhytNimi\":\"Mock Kort\",\"kieli\":\"SV\"}," + 
-        		"{\"nimi\":\"Mock School Name\",\"lyhytNimi\":\"Mock Short\",\"kieli\":\"EN\"}]," + 
-        		"\"versio\":1,\"koodiArvo\":\"123456\"}]", "1.2.3.4.5.6");
-        Assert.assertNotNull(name);
-        Assert.assertEquals(name, "Mock skolanamn");
-    }
-
-    protected String executeWithServer(final String responseContent) throws Exception {
+    protected School executeWithServer(final String responseContent) throws Exception {
     	return executeWithServer(responseContent, null);
     }
     
-    protected String executeWithServer(final String responseContent, final String callerId) throws Exception {
+    protected School executeWithServer(final String responseContent, final String callerId) throws Exception {
         final Container container = new SimpleContainer(responseContent, callerId);
         final SocketProcessor server = new ContainerSocketProcessor(container);
         final Connection connection = new SocketConnection(server);
@@ -576,7 +733,7 @@ public class RestDataConnectorTest {
         	if (callerId != null) {
         		restDataConnector.setNameApiCallerId(callerId);
         	}
-            return restDataConnector.getSchoolName("123456", 
+        	return restDataConnector.getSchool(expectedSchoolId, 
                     "http://localhost:" + port + "/mock");
         } catch (Exception e) {
             log.debug("Catched exception", e);

@@ -34,17 +34,21 @@ import com.google.gson.Gson;
 public class OpintopolkuGsonEncodeDecodeTest {
     
     @Test
-    public void testEncodeDecode() throws Exception {
+    public void testEncodeDecode_withAllAttributes_shouldReturnValidOpintopolkuOppilaitosDTO() throws Exception {
         final String codeUri = "mockCodeUri";
         final String name = "mockName";
         final String shortName = "mockShortName";
         final String language = "mockLanguage";
         final String version = "1";
         final String codeValue = "123456";
+        final String parentOid = "1.2.3.4.5.6.7.8";
+        final String parentName = "mockEducationProviderName";
         OpintopolkuOppilaitosDTO oppilaitos = new OpintopolkuOppilaitosDTO();
         oppilaitos.setCodeUri(codeUri);
         oppilaitos.setCodeValue(codeValue);
         oppilaitos.setVersion(version);
+        oppilaitos.setParentOid(parentOid);
+        oppilaitos.setParentName(parentName);        
         OpintopolkuOppilaitosMetadataDTO metadata = new OpintopolkuOppilaitosMetadataDTO();
         metadata.setLanguage(language);
         metadata.setName(name);
@@ -56,6 +60,39 @@ public class OpintopolkuGsonEncodeDecodeTest {
         Assert.assertEquals(decoded.getCodeUri(), codeUri);
         Assert.assertEquals(decoded.getCodeValue(), codeValue);
         Assert.assertEquals(decoded.getVersion(), version);
+        Assert.assertEquals(decoded.getParentOid(), parentOid);
+        Assert.assertEquals(decoded.getParentName(), parentName);
+        Assert.assertEquals(decoded.getMetadata().length, 1);
+        Assert.assertEquals(decoded.getMetadata()[0].getLanguage(), language);
+        Assert.assertEquals(decoded.getMetadata()[0].getName(), name);
+        Assert.assertEquals(decoded.getMetadata()[0].getShortName(), shortName);
+    }
+    
+    @Test
+    public void testEncodeDecode_withoutParentOidAndParentName_shouldReturnValidOpintopolkuOppilaitosDTO() throws Exception {
+        final String codeUri = "mockCodeUri";
+        final String name = "mockName";
+        final String shortName = "mockShortName";
+        final String language = "mockLanguage";
+        final String version = "1";
+        final String codeValue = "123456";
+        OpintopolkuOppilaitosDTO oppilaitos = new OpintopolkuOppilaitosDTO();
+        oppilaitos.setCodeUri(codeUri);
+        oppilaitos.setCodeValue(codeValue);
+        oppilaitos.setVersion(version);    
+        OpintopolkuOppilaitosMetadataDTO metadata = new OpintopolkuOppilaitosMetadataDTO();
+        metadata.setLanguage(language);
+        metadata.setName(name);
+        metadata.setShortName(shortName);
+        oppilaitos.setMetadata(new OpintopolkuOppilaitosMetadataDTO[] { metadata });
+        Gson gson = new Gson();
+        final String encoded = gson.toJson(oppilaitos);
+        final OpintopolkuOppilaitosDTO decoded = gson.fromJson(encoded, OpintopolkuOppilaitosDTO.class);
+        Assert.assertEquals(decoded.getCodeUri(), codeUri);
+        Assert.assertEquals(decoded.getCodeValue(), codeValue);
+        Assert.assertEquals(decoded.getVersion(), version);
+        Assert.assertNull(decoded.getParentOid());
+        Assert.assertNull(decoded.getParentName());
         Assert.assertEquals(decoded.getMetadata().length, 1);
         Assert.assertEquals(decoded.getMetadata()[0].getLanguage(), language);
         Assert.assertEquals(decoded.getMetadata()[0].getName(), name);

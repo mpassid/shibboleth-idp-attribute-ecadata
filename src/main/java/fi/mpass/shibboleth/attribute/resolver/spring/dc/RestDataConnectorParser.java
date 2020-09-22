@@ -34,7 +34,7 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
 
 import fi.mpass.shibboleth.attribute.resolver.dc.impl.RestDataConnector;
-import net.shibboleth.idp.attribute.resolver.spring.dc.impl.AbstractDataConnectorParser;
+import net.shibboleth.idp.attribute.resolver.spring.dc.AbstractDataConnectorParser;
 import net.shibboleth.utilities.java.support.primitive.StringSupport;
 import net.shibboleth.utilities.java.support.xml.ElementSupport;
 

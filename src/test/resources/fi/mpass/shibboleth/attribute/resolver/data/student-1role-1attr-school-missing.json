@@ -5,28 +5,19 @@
     "roles": [
         { 
             "role": "student",
-            "school": "12345",
             "group": "7C",
             "groupLevel": "7",
             "municipality": "Great City"
-        },
-        { 
-            "role": "student",
-            "school": "23456",
-            "group": "9B",
-            "groupLevel": "9",
-            "municipality": "Rival City"
         }
     ],
     "attributes": [
         {
-            "name": "google",
-            "value": "11XxjGZOeAyNqwTdq0Xec9ydDhYoq5CHrTQXHHSfGWM="
-        },
-        {
             "name": "learnerId",
             "value": "1.2.246.562.24.10000000008"
-        }
-        
+        },
+        {
+        	"name": "municipalityCode", 
+        	"value": "98"
+    	}
     ]
 }
