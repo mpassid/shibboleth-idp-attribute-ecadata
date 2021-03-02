@@ -25,24 +25,25 @@ THE SOFTWARE.
     <parent>
         <groupId>net.shibboleth.idp</groupId>
         <artifactId>idp-parent</artifactId>
-        <version>3.4.7</version>
+        <version>4.0.0</version>
     </parent>
     <groupId>fi.mpass</groupId>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <artifactId>idp-attribute-impl-ecadata</artifactId>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.version>3.5.1</maven.compiler.version>
+        <!-- <maven.compiler.version>3.5.1</maven.compiler.version> -->
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
-        <shib.idp.version>3.4.7</shib.idp.version>
+        <shib.idp.version>4.0.0</shib.idp.version>
         <gson.version>2.8.6</gson.version>
         <simpleframework.version>6.0.1</simpleframework.version>
-        <mpass.authn.shibsp.version>0.9.7</mpass.authn.shibsp.version>
+        <csc.authn.shibsp.version>1.0.0</csc.authn.shibsp.version>
         <checkstyle.configLocation>mpassid-checkstyle.xml</checkstyle.configLocation>
         <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
+        <automatic.module.name>fi.mpass.shibboleth.attribute.dc.rest</automatic.module.name>
     </properties>
 
     <repositories>
@@ -121,10 +122,11 @@ THE SOFTWARE.
             <version>${opensaml.version}</version>
         </dependency>
         <dependency>
-            <groupId>fi.mpass</groupId>
+            <groupId>fi.csc.shibboleth</groupId>
             <artifactId>idp-authn-api-shibsp</artifactId>
-            <version>${mpass.authn.shibsp.version}</version>
+            <version>1.0.0</version>
         </dependency>
+        
 
         <dependency>
             <groupId>net.shibboleth.ext</groupId>
@@ -138,6 +140,7 @@ THE SOFTWARE.
         <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity</artifactId>
+            <version>1.7</version>
         </dependency>
         <dependency>
             <groupId>org.ldaptive</groupId>

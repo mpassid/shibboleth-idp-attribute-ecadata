@@ -23,8 +23,8 @@
 
 package fi.mpass.shibboleth.attribute.resolver.dc.impl;
 
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -62,11 +62,11 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import fi.csc.shibboleth.authn.principal.impl.ShibAttributePrincipal;
 import fi.mpass.shibboleth.attribute.resolver.data.School;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
 import fi.mpass.shibboleth.attribute.resolver.spring.dc.RestDataConnectorParserTest;
-import fi.mpass.shibboleth.authn.principal.impl.ShibAttributePrincipal;
 import net.shibboleth.idp.attribute.IdPAttribute;
 import net.shibboleth.idp.attribute.IdPAttributeValue;
 import net.shibboleth.idp.attribute.StringAttributeValue;
@@ -180,7 +180,7 @@ public class RestDataConnectorTest {
         dataConnector.populateAttribute(attributes, name, value);
         Assert.assertEquals(attributes.size(), 1);
         Assert.assertEquals(attributes.get(name).getValues().size(), 1);
-        Assert.assertEquals(attributes.get(name).getValues().get(0).getValue(), value);
+        Assert.assertEquals(attributes.get(name).getValues().get(0).getNativeValue(), value);
     }
     
     /**
@@ -196,7 +196,7 @@ public class RestDataConnectorTest {
         final IdPAttribute attribute = attributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES);
         Assert.assertNotNull(attribute);
         Assert.assertEquals(attribute.getValues().size(), 1);
-        Assert.assertEquals(attribute.getValues().get(0).getValue(), ";;;");
+        Assert.assertEquals(attribute.getValues().get(0).getNativeValue(), ";;;");
     }
     
     /**
@@ -228,7 +228,7 @@ public class RestDataConnectorTest {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("user-0role-0attr.json", 
                 "restdc-min.xml");
         Assert.assertEquals(resolvedAttributes.size(), 3);
-        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(), expectedOid);
     }
 
     /**
@@ -243,7 +243,7 @@ public class RestDataConnectorTest {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-1role-1attr.json", 
                 "restdc-min.xml");
         Assert.assertEquals(resolvedAttributes.size(), 13);
-        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(), expectedOid);
         Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
     }
@@ -260,7 +260,7 @@ public class RestDataConnectorTest {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-1role-1attr2.json", 
                 "restdc-min.xml");
         Assert.assertEquals(resolvedAttributes.size(), 12);
-        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(), expectedOid);
         Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUPS));
@@ -279,7 +279,7 @@ public class RestDataConnectorTest {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-1role-1attr3.json", 
                 "restdc-min.xml");
         Assert.assertEquals(resolvedAttributes.size(), 6);
-        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(), expectedOid);
         Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUPS));
@@ -299,18 +299,18 @@ public class RestDataConnectorTest {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-1attr.json", 
                 "restdc-min.xml");
         Assert.assertEquals(resolvedAttributes.size(), 14);
-        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(), expectedOid);
         
-        final List<IdPAttributeValue<?>> groupLevels 
+        final List<IdPAttributeValue> groupLevels 
             = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS).getValues();
         Assert.assertTrue(verifyAttributeValueExists(groupLevels, "7"));
-        Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0).getValue(), expectedLearnerId);
+        Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0).getNativeValue(), expectedLearnerId);
         
-        final List<IdPAttributeValue<?>> educationProviderOids = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_OID).getValues();
+        final List<IdPAttributeValue> educationProviderOids = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_OID).getValues();
         Assert.assertEquals(educationProviderOids.size(), 1);
         Assert.assertTrue(verifyAttributeValueExists( educationProviderOids, expectedParentOid));
         
-        final List<IdPAttributeValue<?>> educationProviderNames = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_NAME).getValues();
+        final List<IdPAttributeValue> educationProviderNames = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_NAME).getValues();
         Assert.assertEquals(educationProviderNames.size(), 1);
         Assert.assertTrue(verifyAttributeValueExists( educationProviderNames, expectedParentName));
     }
@@ -327,9 +327,9 @@ public class RestDataConnectorTest {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-1attr-invalidGroupLevel.json", 
                 "restdc-min.xml");
         Assert.assertEquals(resolvedAttributes.size(), 13);
-        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(), expectedOid);
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
-        Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0).getValue(), expectedLearnerId);
+        Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0).getNativeValue(), expectedLearnerId);
     }
 
     /**
@@ -344,17 +344,17 @@ public class RestDataConnectorTest {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-1attr-school-missing.json", 
                 "restdc-min.xml");
         Assert.assertEquals(resolvedAttributes.size(), 11);
-        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(), expectedOid);
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_SCHOOL_IDS));
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_OID));
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_NAME));
-        final List<IdPAttributeValue<?>> groups = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUPS).getValues();
+        final List<IdPAttributeValue> groups = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUPS).getValues();
         Assert.assertEquals(groups.size(), 1);
-        Assert.assertEquals(groups.get(0).getValue(), "7C");
-        final List<IdPAttributeValue<?>> groupLevels = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS).getValues();
+        Assert.assertEquals(groups.get(0).getNativeValue(), "7C");
+        final List<IdPAttributeValue> groupLevels = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS).getValues();
         Assert.assertEquals(groupLevels.size(), 1);
-        Assert.assertEquals(groupLevels.get(0).getValue(), "7");
-        Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0).getValue(), expectedLearnerId);
+        Assert.assertEquals(groupLevels.get(0).getNativeValue(), "7");
+        Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0).getNativeValue(), expectedLearnerId);
     }
     
     /**
@@ -368,7 +368,7 @@ public class RestDataConnectorTest {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-2role-2attr.json", 
                 "restdc-min.xml");
         Assert.assertEquals(resolvedAttributes.size(), 14);
-        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(), expectedOid);
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
         Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_LEARNER_ID));
     }
@@ -384,18 +384,18 @@ public class RestDataConnectorTest {
         final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-2role-2attr.json", 
                 "restdc-min.xml");
         Assert.assertEquals(resolvedAttributes.size(), 15);
-        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getValue(), expectedOid);
+        Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(), expectedOid);
         
-        final List<IdPAttributeValue<?>> groupLevels 
+        final List<IdPAttributeValue> groupLevels 
             = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS).getValues();
         Assert.assertEquals(groupLevels.size(), 2);
         Assert.assertTrue(verifyAttributeValueExists(groupLevels, "7", "9"));
         
-        final List<IdPAttributeValue<?>> educationProviderOids = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_OID).getValues();
+        final List<IdPAttributeValue> educationProviderOids = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_OID).getValues();
         Assert.assertEquals(educationProviderOids.size(), 2);
         Assert.assertTrue(verifyAttributeValueExists( educationProviderOids, expectedParentOid, expectedParentOid2));
         
-        final List<IdPAttributeValue<?>> educationProviderNames = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_NAME).getValues();
+        final List<IdPAttributeValue> educationProviderNames = resolvedAttributes.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_NAME).getValues();
         Assert.assertEquals(educationProviderNames.size(), 2);
         Assert.assertTrue(verifyAttributeValueExists( educationProviderNames, expectedParentName, expectedParentName2));
     }
@@ -407,11 +407,11 @@ public class RestDataConnectorTest {
      * @param input The values whose existence is verified from the list of attributes.
      * @return True if all values were found, false otherwise.
      */
-    protected boolean verifyAttributeValueExists(final List<IdPAttributeValue<?>> output, String... input) {
+    protected boolean verifyAttributeValueExists(final List<IdPAttributeValue> output, String... input) {
         for (final String inputValue : input) {
             boolean found = false;
-            for (final IdPAttributeValue<?> value : output) {
-                if (inputValue.equals(value.getValue().toString())) {
+            for (final IdPAttributeValue value : output) {
+                if (inputValue.equals(value.getNativeValue().toString())) {
                     found = true;
                     break;
                 }
@@ -536,7 +536,7 @@ public class RestDataConnectorTest {
     protected void recordWorkContextAttribute(final String attributeName, final String attributeValue,
             final AttributeResolverWorkContext workContext) throws ComponentInitializationException,
             ResolutionException {
-        final AttributeDefinition definition = TestSources.populatedStaticAttribute(attributeName, attributeName, 1);
+        final AttributeDefinition definition = TestSources.populatedStaticAttribute(attributeName, 1);
         workContext.recordAttributeDefinitionResolution(definition, populateAttribute(attributeName, attributeValue));
     }
 
@@ -549,7 +549,7 @@ public class RestDataConnectorTest {
      */
     protected IdPAttribute populateAttribute(final String attributeName, final String attributeValue) {
         IdPAttribute idpAttribute = new IdPAttribute(attributeName);
-        final List<IdPAttributeValue<String>> values = new ArrayList<>();
+        final List<IdPAttributeValue> values = new ArrayList<>();
         values.add(new StringAttributeValue(attributeValue));
         idpAttribute.setValues(values);
         return idpAttribute;

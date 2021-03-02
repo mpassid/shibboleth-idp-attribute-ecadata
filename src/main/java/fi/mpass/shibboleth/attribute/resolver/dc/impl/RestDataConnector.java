@@ -60,6 +60,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
+import fi.csc.shibboleth.authn.principal.impl.KeyValuePrincipal;
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosMetadataDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.RolesTypeAdapter;
@@ -67,11 +68,11 @@ import fi.mpass.shibboleth.attribute.resolver.data.School;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.AttributesDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
-import fi.mpass.shibboleth.authn.principal.impl.KeyValuePrincipal;
 import net.shibboleth.idp.attribute.IdPAttribute;
 import net.shibboleth.idp.attribute.IdPAttributeValue;
 import net.shibboleth.idp.attribute.StringAttributeValue;
 import net.shibboleth.idp.attribute.resolver.AbstractDataConnector;
+import net.shibboleth.idp.attribute.resolver.DataConnector;
 import net.shibboleth.idp.attribute.resolver.ResolutionException;
 import net.shibboleth.idp.attribute.resolver.ResolvedAttributeDefinition;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolutionContext;
@@ -558,13 +559,13 @@ public class RestDataConnector extends AbstractDataConnector {
             log.trace("Adding a new value to existing attribute {}", resultAttributePrefix + attributeId);
             final IdPAttribute idpAttribute = attributes.get(resultAttributePrefix + attributeId);
             log.trace("Existing values {}", idpAttribute.getValues());
-            final List<IdPAttributeValue<String>> values = copyExistingValues(idpAttribute.getValues());
+            final List<IdPAttributeValue> values = copyExistingValues(idpAttribute.getValues());
             values.add(new StringAttributeValue(attributeValue));
             idpAttribute.setValues(values);
             log.debug("Added value {} to attribute {}", attributeValue, resultAttributePrefix + attributeId);
         } else {
             final IdPAttribute idpAttribute = new IdPAttribute(resultAttributePrefix + attributeId);
-            final List<IdPAttributeValue<String>> values = new ArrayList<>();
+            final List<IdPAttributeValue> values = new ArrayList<>();
             values.add(new StringAttributeValue(attributeValue));
             idpAttribute.setValues(values);
             attributes.put(resultAttributePrefix + attributeId, idpAttribute);
@@ -578,11 +579,11 @@ public class RestDataConnector extends AbstractDataConnector {
      * @return A writable list containing existing values.
      */
     @SuppressWarnings("unchecked")
-    protected List<IdPAttributeValue<String>> copyExistingValues(final List<IdPAttributeValue<?>> sourceValues) {
-        final List<IdPAttributeValue<String>> values = new ArrayList<>();
-        final Iterator<IdPAttributeValue<?>> iterator = sourceValues.iterator();
+    protected List<IdPAttributeValue> copyExistingValues(final List<IdPAttributeValue> sourceValues) {
+        final List<IdPAttributeValue> values = new ArrayList<>();
+        final Iterator<IdPAttributeValue> iterator = sourceValues.iterator();
         while (iterator.hasNext()) {
-            values.add((IdPAttributeValue<String>)iterator.next());
+            values.add((IdPAttributeValue)iterator.next());
         }
         return values;
     }
@@ -736,14 +737,14 @@ public class RestDataConnector extends AbstractDataConnector {
         if (definition == null || definition.getResolvedAttribute() == null) {
             log.warn("Could not find an attribute {} from the context", attributeId);
         } else {
-            final List<IdPAttributeValue<?>> values = definition.getResolvedAttribute().getValues();
+            final List<IdPAttributeValue> values = definition.getResolvedAttribute().getValues();
             if (values.size() == 0) {
                 log.warn("No value found for the attribute {}", attributeId);
             } else if (values.size() > 1) {
                 log.warn("Multiple values found for the attribute {}, all ignored", attributeId);
             } else {
                 log.debug("Found a single value for the attribute {}", attributeId);
-                return (String) values.get(0).getValue();
+                return (String) values.get(0).getNativeValue();
             }
         }
         return null;
