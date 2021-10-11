@@ -531,7 +531,8 @@ public class RestDataConnector extends AbstractDataConnector {
     protected void populateStructuredRole(final Map<String, IdPAttribute> attributes, final String schoolName, 
             final String schoolId, final UserDTO.RolesDTO role) {
         final String school = schoolName != null ? schoolName : "";
-        final String group = role.getGroup() != null ? role.getGroup() : "";
+        //final String group = role.getGroup() != null ? role.getGroup() : "";
+        final String group = role.getGroup() != null ? role.getGroup().replace(";", "|") : "";
         final String aRole = role.getRole() != null ? role.getRole() : "";
         final String municipality = role.getMunicipality() != null ? role.getMunicipality() : "";
         final String structuredRole = municipality + ";" + school + ";" + group + ";" + aRole;

@@ -200,6 +200,55 @@ public class RestDataConnectorTest {
     }
     
     /**
+     * Tests populateStructuredRole with school object and multiple groups separated with semicolon.
+     * Should replace semicolon with vertical bar (pipe) character.
+     * 
+     * @throws Exception 
+     */
+    @Test public void testPopulateStructuredRole_whenOneGroup_shouldReturnValidStructuredRole() {
+    	final UserDTO user = new UserDTO();
+    	final Map<String, IdPAttribute> attributes = new HashMap<>();
+    	final RestDataConnector dataConnector = new RestDataConnector();
+    	dataConnector.setResultAttributePrefix("");
+    	
+    	RolesDTO role = user.new RolesDTO();
+    	final String actualGroup = "7C";
+    	final String expectedGroup = "7C";
+    	role.setGroup(actualGroup);
+
+    	final String expected = ";" + expectedSchoolId + ";" + expectedGroup + ";";
+    	dataConnector.populateStructuredRole(attributes, expectedSchoolName, expectedSchoolId, role);
+    	final IdPAttribute attribute = attributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID);
+    	Assert.assertEquals(attribute.getValues().size(), 1);
+        Assert.assertEquals(attribute.getValues().get(0).getNativeValue(), expected);
+    }
+    
+    /**
+     * Tests populateStructuredRole with school object and multiple groups separated with semicolon.
+     * Should replace semicolon with vertical bar (pipe) character.
+     * 
+     * @throws Exception 
+     */
+    @Test public void testPopulateStructuredRole_whenMultipleGroupsWithSemicolonAsSeparator_shouldReturnWithGroupAsSemicolonReplaced() {
+    	final UserDTO user = new UserDTO();
+    	final Map<String, IdPAttribute> attributes = new HashMap<>();
+    	final RestDataConnector dataConnector = new RestDataConnector();
+    	dataConnector.setResultAttributePrefix("");
+    	
+    	//School school = new School(expectedSchoolId, expectedSchoolName, expectedParentOid, expectedParentName);
+    	RolesDTO role = user.new RolesDTO();
+    	final String actualGroup = "7C;8C";
+    	final String expectedGroup = "7C|8C";
+    	role.setGroup(actualGroup);
+
+    	final String expected = ";" + expectedSchoolId + ";" + expectedGroup + ";";
+    	dataConnector.populateStructuredRole(attributes, expectedSchoolName, expectedSchoolId, role);
+    	final IdPAttribute attribute = attributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID);
+    	Assert.assertEquals(attribute.getValues().size(), 1);
+        Assert.assertEquals(attribute.getValues().get(0).getNativeValue(), expected);
+    }
+    
+    /**
      * Tests {@link RestDataConnector} with minimum configuration, with empty authnId value.
      */
     @Test(expectedExceptions = ResolutionException.class)
