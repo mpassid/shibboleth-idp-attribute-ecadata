@@ -28,22 +28,24 @@ THE SOFTWARE.
         <version>4.0.0</version>
     </parent>
     <groupId>fi.mpass</groupId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.3-rc2</version>
     <packaging>jar</packaging>
     <artifactId>idp-attribute-impl-ecadata</artifactId>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!-- <maven.compiler.version>3.5.1</maven.compiler.version> -->
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <shib.idp.version>4.0.0</shib.idp.version>
+        <apache.velocity.version>1.7</apache.velocity.version>
+        <commons-io.version>2.7</commons-io.version>
         <gson.version>2.8.6</gson.version>
         <simpleframework.version>6.0.1</simpleframework.version>
         <csc.authn.shibsp.version>1.0.0</csc.authn.shibsp.version>
         <checkstyle.configLocation>mpassid-checkstyle.xml</checkstyle.configLocation>
         <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
         <automatic.module.name>fi.mpass.shibboleth.attribute.dc.rest</automatic.module.name>
+        <fi.csc.shibboleth.shibsp>1.0.0</fi.csc.shibboleth.shibsp>
     </properties>
 
     <repositories>
@@ -124,7 +126,7 @@ THE SOFTWARE.
         <dependency>
             <groupId>fi.csc.shibboleth</groupId>
             <artifactId>idp-authn-api-shibsp</artifactId>
-            <version>1.0.0</version>
+            <version>${fi.csc.shibboleth.shibsp}</version>
         </dependency>
         
 
@@ -140,7 +142,7 @@ THE SOFTWARE.
         <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity</artifactId>
-            <version>1.7</version>
+            <version>${apache.velocity.version}</version>
         </dependency>
         <dependency>
             <groupId>org.ldaptive</groupId>
@@ -154,7 +156,7 @@ THE SOFTWARE.
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.4</version>
+            <version>${commons-io.version}</version>
         </dependency>
 
         <!-- Provided Dependencies -->

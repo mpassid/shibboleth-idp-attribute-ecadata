@@ -1,0 +1,36 @@
+{
+	"username": "OID1",
+	"first_name": "Testi71",
+	"last_name": "Opettaja71",
+	"roles": [],
+	"attributes": [
+		{
+			"name": "legacyId",
+			"value": "5fafca76ac5dbae4c611af19a82860a7"
+		},
+		{
+			"name": "municipalityCode",
+			"value": "991"
+		},
+		{
+			"name": "learnerId",
+			"value": "1.2.246.562.24.10000000008"
+		},
+		{
+			"name": "schoolCodes",
+			"value": "12345;12345;23456"
+		},
+		{
+			"name": "schoolGroups",
+			"value": ";4B;6C"
+		},
+		{
+			"name": "groupLevel",
+			"value": "7"
+		},
+		{
+			"name": "schoolRoles",
+			"value": "Opettaja;Sijaisopettaja;Sijaisopettaja"
+		}
+	]
+}

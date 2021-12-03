@@ -1,0 +1,29 @@
+{
+    "username": "OID1",
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "municipality": "Helsinki",
+    "roles": [],
+    "attributes": [
+        {
+            "name": "schoolCodes",
+            "value": "12345;23456"
+        },
+        {
+            "name": "schoolRoles",
+            "value": "oppilas;oppilas"
+        },
+        {
+            "name": "schoolGroups",
+            "value": "7C;9B"
+        },
+        {
+            "name": "groupLevel",
+            "value": "7"
+        },
+        {
+            "name": "learnerId",
+            "value": "1.2.246.562.24.10000000008"
+        }
+    ]
+}
