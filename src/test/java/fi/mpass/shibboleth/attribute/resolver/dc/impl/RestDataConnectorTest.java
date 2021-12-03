@@ -25,8 +25,6 @@ package fi.mpass.shibboleth.attribute.resolver.dc.impl;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -39,11 +37,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.security.auth.Subject;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
@@ -1290,5 +1286,4 @@ public class RestDataConnectorTest {
 			}
 		}
 	}
-
 }
