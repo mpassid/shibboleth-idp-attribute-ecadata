@@ -113,6 +113,8 @@ public class RestDataConnectorParserTest extends BaseAttributeDefinitionParserTe
         Assert.assertEquals(dataConnector.getToken(), expectedToken);
         Assert.assertEquals(dataConnector.getNameApiBaseUrl(), expectedNameApiBaseUrl);
         Assert.assertEquals(dataConnector.getNameApiCallerId(), expectedNameApiCallerId);
+        Assert.assertNotNull(dataConnector.getSchoolRoleMappings());
+        Assert.assertEquals(dataConnector.getSchoolRoleMappings().get("teacher"), "Opettaja");
     }
 
     /**

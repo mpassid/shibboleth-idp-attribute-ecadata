@@ -34,6 +34,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +78,7 @@ import net.shibboleth.idp.attribute.resolver.context.AttributeResolverWorkContex
 import net.shibboleth.idp.authn.AuthenticationResult;
 import net.shibboleth.idp.authn.context.AuthenticationContext;
 import net.shibboleth.idp.saml.impl.TestSources;
+import net.shibboleth.utilities.java.support.collection.Pair;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.httpclient.HttpClientBuilder;
 
@@ -133,6 +135,8 @@ public class RestDataConnectorTest {
 
 	/** The expected parent info values. */
 	private String expectedParentInfo;
+	
+	private Map<String,String> schoolRoleMappings;
 
 	/**
 	 * Initialize unit tests.
@@ -523,19 +527,6 @@ public class RestDataConnectorTest {
 		Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
 		Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
 	}
-	
-	@Test
-	public void testResolveAttributes_whenTestiu_00001_shouldReturnValidUserDTO()
-			throws ComponentInitializationException, ResolutionException, Exception {
-		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("testiu_00001.json",
-				"restdc-min.xml");
-		Assert.assertEquals(resolvedAttributes.size(), 18);
-		Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID).getValues().get(0).getNativeValue(),
-				"Testilä;99904;1D;Oppilas");
-		//Assert.assertEquals(resolvedAttributes, "foo");
-		//Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
-		//Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
-	}
 
 
 	/**
@@ -634,7 +625,6 @@ public class RestDataConnectorTest {
 		//final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-7attr.json",
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-MultipleRoleAttributes.json",
 				"restdc-min.xml");
-		// TODO: Tarkista palautettavien attribuuttien määrä
 		//Assert.assertEquals(resolvedAttributes, "foo");
 		Assert.assertEquals(resolvedAttributes.size(), 21);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
@@ -648,27 +638,27 @@ public class RestDataConnectorTest {
 
 		final List<IdPAttributeValue> schoolIds = resolvedAttributes.get(RestDataConnector.ATTR_ID_SCHOOL_IDS)
 				.getValues();
-		Assert.assertEquals(schoolIds.size(), 3);
+		Assert.assertEquals(schoolIds.size(), 2);
 		Assert.assertTrue(verifyAttributeValueExists(schoolIds, expectedSchoolId));
 
 		final List<IdPAttributeValue> schoolInfos = resolvedAttributes.get(RestDataConnector.ATTR_ID_SCHOOL_INFOS)
 				.getValues();
-		Assert.assertEquals(schoolInfos.size(), 3);
+		Assert.assertEquals(schoolInfos.size(), 2);
 		//Assert.assertTrue(verifyAttributeValueExists(schoolInfos, expectedSchoolInfo));
 
 		final List<IdPAttributeValue> educationProviderOids = resolvedAttributes
 				.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_OID).getValues();
-		Assert.assertEquals(educationProviderOids.size(), 3);
+		Assert.assertEquals(educationProviderOids.size(), 2);
 		Assert.assertTrue(verifyAttributeValueExists(educationProviderOids, expectedParentOid));
 
 		final List<IdPAttributeValue> educationProviderNames = resolvedAttributes
 				.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_NAME).getValues();
-		Assert.assertEquals(educationProviderNames.size(), 3);
+		Assert.assertEquals(educationProviderNames.size(), 2);
 		Assert.assertTrue(verifyAttributeValueExists(educationProviderNames, expectedParentName));
 
 		final List<IdPAttributeValue> educationProviderInfos = resolvedAttributes
 				.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_INFOS).getValues();
-		Assert.assertEquals(educationProviderOids.size(), 3);
+		Assert.assertEquals(educationProviderOids.size(), 2);
 		Assert.assertTrue(verifyAttributeValueExists(educationProviderInfos, expectedParentInfo));
 	}
 
@@ -816,6 +806,107 @@ public class RestDataConnectorTest {
 		Assert.assertTrue(verifyAttributeValueExists(educationProviderNames, expectedParentName, expectedParentName2));
 	}
 
+	@Test
+	public void testResolveAttributes_whenTestiu_00001_shouldReturnValidUserDTO()
+			throws ComponentInitializationException, ResolutionException, Exception {
+		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("testiu_00001.json",
+				"restdc-min.xml");
+		Assert.assertEquals(resolvedAttributes.size(), 24);
+		Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID).getValues().get(0).getNativeValue(),
+				"Testilä;99904;1D;Oppilas");
+		//Assert.assertEquals(resolvedAttributes, "foo");
+		//Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
+		//Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
+	}
+	
+	
+	@Test
+	public void testResolveAttributes_whenTestu_00071_shouldReturnValidUserDTO()
+			throws ComponentInitializationException, ResolutionException, Exception {
+		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("testiu_00071.json",
+				"restdc-min.xml");
+		//Assert.assertEquals(resolvedAttributes, "foo");
+		
+		Assert.assertEquals(resolvedAttributes.size(), 20);
+		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
+				"MPASSOID.6dfaba3e247015501de9c129a1a70926e0fa8f7f");
+
+		final List<IdPAttributeValue> structuredRoleWids = resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID)
+				.getValues();
+		Assert.assertEquals(structuredRoleWids.size(), 3);
+		Assert.assertEquals(structuredRoleWids.get(0).getNativeValue(), "Testilä;99904;;Opettaja");
+		Assert.assertEquals(structuredRoleWids.get(1).getNativeValue(), "Testilä;99905;4B;Sijaisopettaja");
+		Assert.assertEquals(structuredRoleWids.get(2).getNativeValue(), "Testilä;99906;6C;Sijaisopettaja");
+	}
+	
+	/**
+	 * Tests {@link RestDataConnector} resolver attributes for test users.
+	 * 
+	 * It's poosible to test only one expected value for multivalue attribute.
+	 */
+	@Test
+	public void testResolveAttributes_whenTestUser_shouldReturnValidUserDTO()
+			throws ComponentInitializationException, ResolutionException, Exception {
+		
+		List<Pair<String, HashMap<String,Object>>> testUsers = new ArrayList<>();
+	
+		testUsers.add(new Pair<>("testiu_00001", new HashMap<>()));
+		testUsers.get(0).getSecond().put("expectedSize",24);		
+		testUsers.get(0).getSecond().put(RestDataConnector.ATTR_ID_USERNAME, "MPASSOID.3e62d573058fa45216cd011ec67aa31552750baa");
+		testUsers.get(0).getSecond().put("roleSize", 1);
+		
+		testUsers.add(new Pair<>("testiu_00070", new HashMap<>()));
+		testUsers.get(1).getSecond().put("expectedSize",19);
+		testUsers.get(1).getSecond().put(RestDataConnector.ATTR_ID_USERNAME, "MPASSOID.7ac492de994ae2ef6d6278ae3ff0150c6545e27e");
+		testUsers.get(1).getSecond().put(RestDataConnector.ATTR_ID_SCHOOL_IDS, "99906");
+		testUsers.get(1).getSecond().put("schoolIdsSize", 3);
+
+		testUsers.add(new Pair<>("testiu_00071", new HashMap<>()));
+		testUsers.get(2).getSecond().put("expectedSize",20);
+		testUsers.get(2).getSecond().put(RestDataConnector.ATTR_ID_USERNAME, "MPASSOID.6dfaba3e247015501de9c129a1a70926e0fa8f7f");
+		testUsers.get(2).getSecond().put(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID, "1.2.246.562.10.45678901237;99904;;Opettaja");
+		testUsers.get(2).getSecond().put("roleSize", 3);
+
+		testUsers.add(new Pair<>("testiu_00060", new HashMap<>()));
+		testUsers.get(3).getSecond().put("expectedSize",7);
+		testUsers.get(3).getSecond().put(RestDataConnector.ATTR_ID_SCHOOL_IDS, null);
+		testUsers.get(3).getSecond().put(RestDataConnector.ATTR_ID_USERNAME, "MPASSOID.d41117ccc3d8424293b121163d1ee2f61ffc7513");
+
+		for (Pair<String, HashMap<String,Object>> user : testUsers) {
+			
+			final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes(user.getFirst() + ".json",
+					"restdc-min.xml");
+			
+			Map<String,Object> expectedAttributes = user.getSecond();
+			
+			expectedAttributes.forEach((k,v) -> {
+			
+				if (v == null) {
+					Assert.assertNull(resolvedAttributes.get(k));
+				} else if (k.toLowerCase().endsWith("size")) {
+					
+					// Fails if key with size is defined for testUsers but not here.
+					switch (k) {
+						case "expectedSize":
+							Assert.assertEquals(resolvedAttributes.size(), user.getSecond().get("expectedSize"));
+							break;
+						case "roleSize":
+							Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID).getValues().size(), user.getSecond().get(k));
+							break;
+						case "schoolIdsSize":
+							Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_SCHOOL_IDS).getValues().size(), user.getSecond().get(k));
+							break;
+						default:
+							Assert.assertTrue(false, user.getFirst() + " has an key for attribute size test but the key is not defined in test cases. AssertTrue:");
+					}
+				} else {
+					String expectedValue = user.getSecond().get(k).toString();
+					Assert.assertTrue(verifyAttributeValueExists(resolvedAttributes.get(k).getValues(), expectedValue), user.getFirst() + " attribute " + k + " failed with expected value: " + expectedValue + ". AssertTrue:");
+				}
+			});
+		}
+	}
+	
 	/**
 	 * Verifies that all the given values are found from the given list of
 	 * attributes.
@@ -826,6 +917,26 @@ public class RestDataConnectorTest {
 	 * @return True if all values were found, false otherwise.
 	 */
 	protected boolean verifyAttributeValueExists(final List<IdPAttributeValue> output, String... input) {
+		for (final String inputValue : input) {
+			for (final IdPAttributeValue value : output) {
+				if (inputValue.equals(value.getDisplayValue())) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Verifies that all the given values are found from the given list of
+	 * attributes.
+	 * 
+	 * @param output The list of attributes whose contents are verified.
+	 * @param input  The values whose existence is verified from the list of
+	 *               attributes.
+	 * @return True if all values were found, false otherwise.
+	 */
+/*	protected boolean verifyAttributeValueExists(final List<IdPAttributeValue> output, String... input) {
 		for (final String inputValue : input) {
 			boolean found = false;
 			for (final IdPAttributeValue value : output) {
@@ -839,7 +950,7 @@ public class RestDataConnectorTest {
 			}
 		}
 		return true;
-	}
+	}*/
 
 	/**
 	 * Tests wheter dataconnector settings are valid.
@@ -911,7 +1022,7 @@ public class RestDataConnectorTest {
 	}
 	
 	/**
-	 * Resolves the attributes with the given settings.
+	 * Resolves the attributes with the given settings and default mock schools.
 	 * 
 	 * @param userJson          The User object response simulation from the REST
 	 *                          endpoint.
@@ -921,40 +1032,24 @@ public class RestDataConnectorTest {
 	 */
 	protected Map<String, IdPAttribute> resolveAttributes(String userJson, String connectorSettings) throws Exception {
 		
-		/*
-		HttpClientBuilder mockBuilder = initializeMockBuilder(userJson);
-		final RestDataConnector dataConnector = RestDataConnectorParserTest.initializeDataConnector(connectorSettings);
-		final AttributeResolutionContext context = TestSources.createResolutionContext(TestSources.PRINCIPAL_ID,
-				TestSources.IDP_ENTITY_ID, TestSources.SP_ENTITY_ID);
-		final AttributeResolverWorkContext workContext = context.getSubcontext(AttributeResolverWorkContext.class,
-				false);
-		recordWorkContextAttribute(expectedHookAttribute, "hookAttributeValue", workContext);
-		recordWorkContextAttribute(expectedIdpId, "idpIdValue", workContext);
-		RestDataConnector mockConnector = Mockito.spy(dataConnector);
-		Mockito.doReturn(mockBuilder).when(mockConnector).getHttpClientBuilder();
-		*/
 		School mockSchool = new School(expectedSchoolId, expectedSchoolName, expectedParentOid, expectedParentName);
-		/*
-		Mockito.when(mockConnector.getSchool(eq(expectedSchoolId), anyString())).thenReturn(mockSchool);
-		*/
+		School mockSchool2 = new School(expectedSchoolId2, expectedSchoolName2, expectedParentOid2, expectedParentName2);
 		
-		School mockSchool2 = new School(expectedSchoolId2, expectedSchoolName2, expectedParentOid2,
-				expectedParentName2);
-		/*
-		Mockito.when(mockConnector.getSchool(eq(expectedSchoolId2), anyString())).thenReturn(mockSchool2);
-
-		testSettings(dataConnector, false, "");
-		*/
-		// return mockConnector.doResolve(context, workContext);
-		return resolveAttributes(userJson, connectorSettings, mockSchool, mockSchool2);
+		School mockSchool3 = new School("99900", "Demolan koulu", "1.2.246.562.10.12345678907", "Demolan kunta");
+		School mockSchool4 = new School("99901", "Demolan ala-asteu", "1.2.246.562.10.12345678907", "Demolan kunta");
+		School mockSchool5 = new School("99904", "Testilän koulu", "1.2.246.562.10.45678901237", "Testilän kunta");
+		School mockSchool6 = new School("99905", "Testilän ala-aste", "1.2.246.562.10.45678901237", "Testilän kunta");
+		School mockSchool7 = new School("99906", "Esimerkkilän peruskoulu", "1.2.246.562.10.78901234567", "Esimerkkilän kunta");
+		
+		return resolveAttributes(userJson, connectorSettings, mockSchool, mockSchool2, mockSchool3, mockSchool4, mockSchool5, mockSchool6, mockSchool7);
 	}
 	
 	/**
 	 * Resolves the attributes with the given settings.
 	 * 
-	 * @param userJson          The User object response simulation from the REST
-	 *                          endpoint.
+	 * @param userJson          The User object response simulation from the REST endpoint.
 	 * @param connectorSettings The settings.
+	 * @param mockSchools List of the mocked schools.
 	 * @return The map of resolved attributes.
 	 * @throws Exception
 	 */
@@ -972,14 +1067,15 @@ public class RestDataConnectorTest {
 
 		//School mockSchool = new School(expectedSchoolId, expectedSchoolName, expectedParentOid, expectedParentName);
 		for (final School mockSchool : mockSchools) {
-			Mockito.when(mockConnector.getSchool(eq(mockSchool.getId()), anyString())).thenReturn(mockSchool);			
+			Mockito.when(mockConnector.findSchool(eq(mockSchool.getId()), anyString())).thenReturn(mockSchool);			
 		}
 
 		//School mockSchool2 = new School(expectedSchoolId2, expectedSchoolName2, expectedParentOid2,
 		//		expectedParentName2);
 		//Mockito.when(mockConnector.getSchool(eq(expectedSchoolId2), anyString())).thenReturn(mockSchool2);
 
-		testSettings(dataConnector, false, "");
+		// TODO: Is it ok to remove from here? Settings are tested elsewhere and with it it's not possible to test with different connection setting because discard TLS cert has static value in here.
+		//testSettings(dataConnector, false, "");
 		return mockConnector.doResolve(context, workContext);
 	}
 
@@ -1072,22 +1168,22 @@ public class RestDataConnectorTest {
 
 	@Test
 	public void testGetSchool_whenNull_thenShouldReturnNull() {
-		Assert.assertNull(new RestDataConnector().getSchool(null, null));
+		Assert.assertNull(new RestDataConnector().findSchool(null, null));
 	}
 
 	@Test
 	public void testGetSchool_whenEmpty_thenShouldReturnNull() {
-		Assert.assertNull(new RestDataConnector().getSchool("", null));
+		Assert.assertNull(new RestDataConnector().findSchool("", null));
 	}
 
 	@Test
 	public void testGetSchool_whenNonNumericSchoolId_thenShouldReturnNull() {
-		Assert.assertNull(new RestDataConnector().getSchool("mock", null));
+		Assert.assertNull(new RestDataConnector().findSchool("mock", null));
 	}
 
 	@Test
 	public void testGetSchool_whenTooLongSchoolId_thenShouldReturnNull() {
-		Assert.assertNull(new RestDataConnector().getSchool("1234567", null));
+		Assert.assertNull(new RestDataConnector().findSchool("1234567", null));
 	}
 
 	@Test
@@ -1097,7 +1193,7 @@ public class RestDataConnectorTest {
 		Mockito.when(mockClient.execute((HttpUriRequest) Mockito.any())).thenThrow(new IOException("mock"));
 		Mockito.when(clientBuilder.buildClient()).thenReturn(mockClient);
 		final RestDataConnector connector = new RestDataConnector(clientBuilder);
-		School school = connector.getSchool("123456", "http://localhost/");
+		School school = connector.findSchool("123456", "http://localhost/");
 		Assert.assertNull(school);
 	}
 
@@ -1217,7 +1313,7 @@ public class RestDataConnectorTest {
 			if (callerId != null) {
 				restDataConnector.setNameApiCallerId(callerId);
 			}
-			return restDataConnector.getSchool(expectedSchoolId, "http://localhost:" + port + "/mock");
+			return restDataConnector.findSchool(expectedSchoolId, "http://localhost:" + port + "/mock");
 		} catch (Exception e) {
 			log.debug("Catched exception", e);
 			return null;
@@ -1239,7 +1335,7 @@ public class RestDataConnectorTest {
 			if (callerId != null) {
 				restDataConnector.setNameApiCallerId(callerId);
 			}
-			return restDataConnector.getSchool(schoolId, "http://localhost:" + port + "/mock");
+			return restDataConnector.findSchool(schoolId, "http://localhost:" + port + "/mock");
 		} catch (Exception e) {
 			log.debug("Catched exception", e);
 			return null;

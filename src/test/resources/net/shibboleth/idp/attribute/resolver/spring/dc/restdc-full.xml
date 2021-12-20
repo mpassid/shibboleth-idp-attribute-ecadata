@@ -25,4 +25,8 @@
         <eca:Mapping attributeName="schoolIds" principalName="schoolId"/>
         <eca:Mapping attributeName="groupLevels" principalName="groupLevel"/>
     </eca:DirectIdpAttributes>
+    <eca:SchoolRoleMappings>
+    	<eca:RoleMapping inputRole="teacher" outputRole="Opettaja"/>
+    	<eca:RoleMapping inputRole="student" outputRole="Oppilas"/>
+    </eca:SchoolRoleMappings>
 </resolver:DataConnector>

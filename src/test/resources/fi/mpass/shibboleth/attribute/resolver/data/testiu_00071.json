@@ -1,0 +1,40 @@
+{
+	"username": "MPASSOID.6dfaba3e247015501de9c129a1a70926e0fa8f7f",
+	"first_name": "Testi71",
+	"last_name": "Opettaja71",
+	"roles": [],
+	"attributes": [
+		{
+			"name": "legacyId",
+			"value": "5fafca76ac5dbae4c611af19a82860a7"
+		},
+		{
+			"name": "municipalityCode",
+			"value": "991"
+		},
+		{
+			"name": "municipalities",
+			"value": "Testil\u00e4"
+		},
+		{
+			"name": "learnerId",
+			"value": null
+		},
+		{
+			"name": "groupLevel",
+			"value": null
+		},
+		{
+			"name": "schoolCodes",
+			"value": "99904;99905;99906"
+		},
+		{
+			"name": "schoolGroups",
+			"value": ";4B;6C"
+		},
+		{
+			"name": "schoolRoles",
+			"value": "opettaja;Sijaisopettaja;Sijaisopettaja"
+		}
+	]
+}

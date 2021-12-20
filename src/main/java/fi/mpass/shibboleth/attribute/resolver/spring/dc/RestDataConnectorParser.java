@@ -52,6 +52,11 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
     /** Element name for Mapping. */
     public static final QName MAPPING_NAME = new QName(RestDataConnectorNamespaceHandler.NAMESPACE, "Mapping");
 
+    /** Element name for SchoolRoleMappins. */
+    public static final QName SCHOOL_ROLE_MAPPINGS_NAME = new QName(RestDataConnectorNamespaceHandler.NAMESPACE, "SchoolRoleMappings");
+    
+    /** Element name for SchoolRoleMappins. */
+    public static final QName ROLE_MAPPING_NAME = new QName(RestDataConnectorNamespaceHandler.NAMESPACE, "RoleMapping");
     
     /** {@inheritDoc} */
     protected Class<RestDataConnector> getNativeBeanClass() {
@@ -115,6 +120,18 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
             }
             builder.addPropertyValue("principalMappings", principalMappings);            
             builder.addPropertyValue("staticValues", staticValues);            
+        }
+        final Element schoolRoleMappings = ElementSupport.getFirstChildElement(element, SCHOOL_ROLE_MAPPINGS_NAME);
+        //final List<Element> schoolRoleMappings = ElementSupport.getChildElements(element, SCHOOL_ROLE_MAPPINGS_NAME);
+        if (schoolRoleMappings != null) {
+        	final List<Element> roleMappings = ElementSupport.getChildElements(schoolRoleMappings, ROLE_MAPPING_NAME);
+        	final Map<String,String> roleMap = new HashMap<>();
+        	for (final Element mapping : roleMappings) {
+        		final String inputRole = mapping.getAttributeNS(null, "inputRole");
+        		final String outRole = mapping.getAttributeNS(null, "outputRole");
+        		roleMap.put(inputRole, outRole);
+        	}
+        	builder.addPropertyValue("schoolRoleMappings", roleMap);
         }
     }
 }

@@ -17,4 +17,10 @@
     <eca:DirectIdpAttributes idpId="temp">
         <eca:Mapping attributeName="mockName" principalName="mockPrincipal"/>
     </eca:DirectIdpAttributes>
+    <eca:SchoolRoleMappings>
+    	<eca:RoleMapping inputRole="teacher" outputRole="Opettaja"/>
+    	<eca:RoleMapping inputRole="student" outputRole="Oppilas"/>
+    	<eca:RoleMapping inputRole="staff" outputRole="Hallintohenkilö"/>
+    	<eca:RoleMapping inputRole="principal" outputRole="Rehtori"/>
+    </eca:SchoolRoleMappings>
 </resolver:DataConnector>

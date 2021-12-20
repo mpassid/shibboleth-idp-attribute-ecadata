@@ -179,6 +179,8 @@ public class RestDataConnector extends AbstractDataConnector {
 	public static final String DEFAULT_BASE_URL_SCHOOL_INFO = "https://virkailija.opintopolku.fi/koodisto-service/rest/codeelement/oppilaitosnumero_";
 
 	public static final String HEADER_NAME_CALLER_ID = "caller-id";
+	
+	private static final String DEFAULT_ATTR_VALUE_SEPARATOR = ";";
 
 	/** Class logging. */
 	private final Logger log = LoggerFactory.getLogger(RestDataConnector.class);
@@ -206,6 +208,11 @@ public class RestDataConnector extends AbstractDataConnector {
 
 	/** The {@link HttpClientBuilder} used for constructing HTTP clients. */
 	private HttpClientBuilder httpClientBuilder;
+	
+	/**
+	 * The map used for mappaing school roles to the roles used in MPASSid.
+	 * The key is the received role and the value is the role which  */
+	private Map<String,String> schoolRoleMappings;
 
 	/**
 	 * The map for constructing attributes directly from session {@link Principal}s.
@@ -238,6 +245,12 @@ public class RestDataConnector extends AbstractDataConnector {
 		}
 		principalMappings = Collections.emptyMap();
 		staticValues = Collections.emptyMap();
+		schoolRoleMappings = Collections.emptyMap();
+		/*
+		schoolRoleMappings = new HashMap<String, String>();
+		schoolRoleMappings.put("teacher","Opettaja");
+		schoolRoleMappings.put("student","Oppilas");
+		*/
 	}
 
 	/**
@@ -258,6 +271,19 @@ public class RestDataConnector extends AbstractDataConnector {
 	 */
 	public void setStaticValues(final Map<String, Map<String, String>> values) {
 		staticValues = Constraint.isNotNull(values, "The map for static values cannot be null");
+	}
+	
+	/**
+	 * Set the map for school roles.
+	 * 
+	 * @param mapping What to set.
+	 */
+	public void setSchoolRoleMappings(final Map<String,String> mappings) {
+		schoolRoleMappings = Constraint.isNotNull(mappings, "The map for school roles cannot be null");
+	}
+	
+	public Map<String,String> getSchoolRoleMappings() {
+		return schoolRoleMappings;
 	}
 
 	/** {@inheritDoc} */
@@ -418,8 +444,26 @@ public class RestDataConnector extends AbstractDataConnector {
 		}
 		return ecaUser;
 	}
-
+	
+	/**
+	 * Helper method to split multivalue attribute values with dedfault separator.
+	 * 
+	 * @param stringToSplit
+	 * @return
+	 */
 	private String[] splitMultivalueAttribute(@Nonnull final String stringToSplit) {
+		
+		return splitMultivalueAttribute(stringToSplit, DEFAULT_ATTR_VALUE_SEPARATOR);
+	}
+	
+	/**
+	 * Helper method to split multivalue attribute values.
+	 * 
+	 * @param stringToSplit
+	 * @param separator
+	 * @return	The string array of attribute values.
+	 */
+	private String[] splitMultivalueAttribute(@Nonnull final String stringToSplit, @Nonnull final String separator) {
 
 		String[] arrStr = null;
 		
@@ -622,7 +666,7 @@ public class RestDataConnector extends AbstractDataConnector {
 			log.debug("Roles found: {}", ecaUser.getRoles().length);
 			for (int i = 0; i < ecaUser.getRoles().length; i++) {
 				final String rawSchool = ecaUser.getRoles()[i].getSchool();
-				final School school = getSchool(rawSchool, nameApiBaseUrl);
+				final School school = findSchool(rawSchool, nameApiBaseUrl);
 				if (school == null) {
 					log.debug("Didn't find any schools.");
 					if (StringUtils.isNumeric(rawSchool)) {
@@ -677,10 +721,19 @@ public class RestDataConnector extends AbstractDataConnector {
 	 */
 	protected void populateStructuredRole(final Map<String, IdPAttribute> attributes, final String schoolName,
 			final String schoolId, final UserDTO.RolesDTO role) {
+		
 		final String school = schoolName != null ? schoolName : "";
 		final String group = role.getGroup() != null ? role.getGroup() : "";
-		final String aRole = role.getRole() != null ? role.getRole() : "";
 		final String municipality = role.getMunicipality() != null ? role.getMunicipality() : "";
+		String aRole;
+		
+		if (role.getRole() != null) {
+			aRole = schoolRoleMappings.containsKey(role.getRole().toLowerCase()) ? schoolRoleMappings.get(role.getRole().toLowerCase()) : role.getRole();
+			aRole = aRole.substring(0, 1).toUpperCase() + aRole.substring(1);
+		} else {
+			aRole = "";
+		}
+		
 		final String structuredRole = municipality + ";" + school + ";" + group + ";" + aRole;
 		log.debug("Populating structuredRole: {}", structuredRole);
 		populateAttribute(attributes, ATTR_ID_STRUCTURED_ROLES, structuredRole);
@@ -703,8 +756,16 @@ public class RestDataConnector extends AbstractDataConnector {
 			@Nonnull final School school, @Nonnull final UserDTO.RolesDTO role) {
 		if (school.getId() != null && school.getParentOid() != null) {
 			final String group = role.getGroup() != null ? role.getGroup() : "";
-			final String roleInSchool = role.getRole() != null ? role.getRole() : "";
 
+			String roleInSchool;
+			
+			if (role.getRole() != null) {
+				roleInSchool = schoolRoleMappings.containsKey(role.getRole().toLowerCase()) ? schoolRoleMappings.get(role.getRole().toLowerCase()) : role.getRole();
+				roleInSchool = roleInSchool.substring(0, 1).toUpperCase() + roleInSchool.substring(1);
+			} else {
+				roleInSchool = "";
+			}
+			
 			final String structuredRoleWithParentOid = school.getParentOid() + ";" + school.getId() + ";" + group + ";"
 					+ roleInSchool;
 			log.debug("Populating structuredRoleWithParentOid: {}", structuredRoleWithParentOid);
@@ -717,6 +778,7 @@ public class RestDataConnector extends AbstractDataConnector {
 	/**
 	 * Populates an attribute with the the given id and value to the given result
 	 * map. If the id already exists, the value will be appended to its values.
+	 * The same attribute value is appended only ones to the given attribute.
 	 * 
 	 * @param attributes     The result map of attributes.
 	 * @param attributeId    The attribute id.
@@ -735,11 +797,26 @@ public class RestDataConnector extends AbstractDataConnector {
 		if (attributes.get(resultAttributePrefix + attributeId) != null) {
 			log.trace("Adding a new value to existing attribute {}", resultAttributePrefix + attributeId);
 			final IdPAttribute idpAttribute = attributes.get(resultAttributePrefix + attributeId);
+			/*
 			log.trace("Existing values {}", idpAttribute.getValues());
 			final List<IdPAttributeValue> values = copyExistingValues(idpAttribute.getValues());
 			values.add(new StringAttributeValue(trimmedValue));
 			idpAttribute.setValues(values);
 			log.debug("Added value {} to attribute {}", trimmedValue, resultAttributePrefix + attributeId);
+			*/
+			
+			final StringAttributeValue attrValue = new StringAttributeValue(trimmedValue);
+			if (!idpAttribute.getValues().contains(attrValue)) {				
+				log.trace("Existing values {}", idpAttribute.getValues());
+				final List<IdPAttributeValue> values = copyExistingValues(idpAttribute.getValues());
+				// values.add(new StringAttributeValue(trimmedValue));
+				values.add(attrValue);
+				idpAttribute.setValues(values);
+				log.debug("Added value {} to attribute {}", trimmedValue, resultAttributePrefix + attributeId);
+			} else {
+				log.debug("Value {} already exists in attribute {}", attrValue, resultAttributePrefix + attributeId);
+			}
+			
 		} else {
 			final IdPAttribute idpAttribute = new IdPAttribute(resultAttributePrefix + attributeId);
 			final List<IdPAttributeValue> values = new ArrayList<>();
@@ -973,7 +1050,7 @@ public class RestDataConnector extends AbstractDataConnector {
 	 *                      the ID of the school.
 	 * @return The school object.
 	 */
-	public School getSchool(final String schoolId, final String baseUrl) {
+	public School findSchool(final String schoolId, final String baseUrl) {
 		final Logger log = LoggerFactory.getLogger(RestDataConnector.class);
 
 		String trimmedSchoolId = StringSupport.trimOrNull(schoolId);

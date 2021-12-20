@@ -1,0 +1,40 @@
+{
+	"username": "MPASSOID.7ac492de994ae2ef6d6278ae3ff0150c6545e27e",
+	"first_name": "Testi70",
+	"last_name": "Opettaja70",
+	"roles": [],
+	"attributes": [
+		{
+			"name": "legacyId",
+			"value": "8f3e4043c03c06ccd7d666fd4fe96ade"
+		},
+		{
+			"name": "municipalityCode",
+			"value": "991"
+		},
+		{
+			"name": "municipalities",
+			"value": "Testil\u00e4"
+		},
+		{
+			"name": "learnerId",
+			"value": null
+		},
+		{
+			"name": "groupLevel",
+			"value": null
+		},
+		{
+			"name": "schoolCodes",
+			"value": "99904;99905;99906"
+		},
+		{
+			"name": "schoolGroups",
+			"value": null
+		},
+		{
+			"name": "schoolRoles",
+			"value": "Opettaja"
+		}
+	]
+}
