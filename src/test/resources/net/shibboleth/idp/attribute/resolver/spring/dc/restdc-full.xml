@@ -16,6 +16,10 @@
     resultAttributePrefix="testingPrefix" 
     disregardTLSCertificate="true" 
     nameApiCallerId="testingCallerId">
+    <eca:SchoolRoleMappings>
+    	<eca:RoleMapping inputRole="teacher" outputRole="Opettaja"/>
+    	<eca:RoleMapping inputRole="student" outputRole="Oppilas"/>
+    </eca:SchoolRoleMappings>
     <eca:DirectIdpAttributes idpId="idpIdValue" municipalityCode="007" municipality="Helsinki">
         <eca:Mapping attributeName="username" principalName="uid"/>
         <eca:Mapping attributeName="firstName" principalName="givenName"/>
@@ -25,8 +29,4 @@
         <eca:Mapping attributeName="schoolIds" principalName="schoolId"/>
         <eca:Mapping attributeName="groupLevels" principalName="groupLevel"/>
     </eca:DirectIdpAttributes>
-    <eca:SchoolRoleMappings>
-    	<eca:RoleMapping inputRole="teacher" outputRole="Opettaja"/>
-    	<eca:RoleMapping inputRole="student" outputRole="Oppilas"/>
-    </eca:SchoolRoleMappings>
 </resolver:DataConnector>

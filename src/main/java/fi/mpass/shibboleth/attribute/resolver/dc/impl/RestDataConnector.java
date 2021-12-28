@@ -246,11 +246,6 @@ public class RestDataConnector extends AbstractDataConnector {
 		principalMappings = Collections.emptyMap();
 		staticValues = Collections.emptyMap();
 		schoolRoleMappings = Collections.emptyMap();
-		/*
-		schoolRoleMappings = new HashMap<String, String>();
-		schoolRoleMappings.put("teacher","Opettaja");
-		schoolRoleMappings.put("student","Oppilas");
-		*/
 	}
 
 	/**
@@ -797,19 +792,11 @@ public class RestDataConnector extends AbstractDataConnector {
 		if (attributes.get(resultAttributePrefix + attributeId) != null) {
 			log.trace("Adding a new value to existing attribute {}", resultAttributePrefix + attributeId);
 			final IdPAttribute idpAttribute = attributes.get(resultAttributePrefix + attributeId);
-			/*
-			log.trace("Existing values {}", idpAttribute.getValues());
-			final List<IdPAttributeValue> values = copyExistingValues(idpAttribute.getValues());
-			values.add(new StringAttributeValue(trimmedValue));
-			idpAttribute.setValues(values);
-			log.debug("Added value {} to attribute {}", trimmedValue, resultAttributePrefix + attributeId);
-			*/
 			
 			final StringAttributeValue attrValue = new StringAttributeValue(trimmedValue);
 			if (!idpAttribute.getValues().contains(attrValue)) {				
 				log.trace("Existing values {}", idpAttribute.getValues());
 				final List<IdPAttributeValue> values = copyExistingValues(idpAttribute.getValues());
-				// values.add(new StringAttributeValue(trimmedValue));
 				values.add(attrValue);
 				idpAttribute.setValues(values);
 				log.debug("Added value {} to attribute {}", trimmedValue, resultAttributePrefix + attributeId);
@@ -1055,10 +1042,9 @@ public class RestDataConnector extends AbstractDataConnector {
 
 		String trimmedSchoolId = StringSupport.trimOrNull(schoolId);
 		log.debug("TrimmedSchool: {}", trimmedSchoolId);
-
-		// if (StringSupport.trimOrNull(schoolId) == null ||
-		// !StringUtils.isNumeric(schoolId) || schoolId.length() > 6) {
-		if (trimmedSchoolId == null || !StringUtils.isNumeric(trimmedSchoolId) || trimmedSchoolId.length() > 6) {
+		
+		if (trimmedSchoolId == null || 
+				!StringUtils.isNumeric(trimmedSchoolId) || trimmedSchoolId.length() > 6) {
 			return null;
 		}
 		final HttpResponse response;

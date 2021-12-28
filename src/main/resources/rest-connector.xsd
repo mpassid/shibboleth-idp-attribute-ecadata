@@ -39,6 +39,19 @@ THE SOFTWARE.
         <complexContent>
             <extension base="resolver:BaseDataConnectorType">
                 <sequence>
+                    <element name="SchoolRoleMappings" minOccurs="0" maxOccurs="1">
+                        <complexType>
+                            <sequence>
+                                <element name="RoleMapping" maxOccurs="unbounded">
+                                    <complexType>
+                                    <attribute name="inputRole" type="string" use="required" />
+                                    <attribute name="outputRole" type="string" use="required" />
+                                    </complexType>
+                                </element>
+                            </sequence>
+                        </complexType>
+                	</element>
+                	
                     <element name="DirectIdpAttributes" minOccurs="0" maxOccurs="unbounded">
                         <complexType>
                             <sequence>
@@ -54,19 +67,6 @@ THE SOFTWARE.
                              <attribute name="municipalityCode" type="string" use="optional"/>
                         </complexType>
                     </element>
-                    
-                    <element name="SchoolRoleMappings" minOccurs="0" maxOccurs="1">
-                        <complexType>
-                            <sequence>
-                                <element name="RoleMapping" maxOccurs="unbounded">
-                                    <complexType>
-                                    <attribute name="inputRole" type="string" use="required" />
-                                    <attribute name="outputRole" type="string" use="required" />
-                                    </complexType>
-                                </element>
-                            </sequence>
-                        </complexType>
-                	</element>
                 </sequence>
 
                 <attribute name="endpointUrl" type="string" use="required">
