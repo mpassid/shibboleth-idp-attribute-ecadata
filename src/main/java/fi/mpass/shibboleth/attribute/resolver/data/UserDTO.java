@@ -87,6 +87,9 @@ public class UserDTO {
 		/** The group corresponding to the role. */
 		private String group;
 
+		/** The info weather the learning material is paid by the school */
+		private Integer learningMaterialsCharge;
+		
 		/** The municipality corresponding to the role. */
 		private String municipality;
 
@@ -148,6 +151,24 @@ public class UserDTO {
 		}
 
 		/**
+		 * Get learning material charge value.
+		 * @return
+		 */
+		public Integer getLearningMaterialsCharge() {
+			return learningMaterialsCharge;
+		}
+
+		/**
+		 * Set learning material charge if the value is 0 or 1.
+		 * @param learningMaterialsCharge
+		 */
+		public void setLearningMaterialsCharge(Integer newLearningMaterialsCharge) {
+			//if (newLearningMaterialsCharge == 0 || newLearningMaterialsCharge == 1) {
+				learningMaterialsCharge = newLearningMaterialsCharge;
+			//}
+		}
+		
+		/**
 		 * Set municipality.
 		 * 
 		 * @param newMunicipality The value to be set.
@@ -185,7 +206,7 @@ public class UserDTO {
 
 		public String toString() {
 			return "Group: " + group + ", GroupLevel: " + groupLevel + ", Municipality: " + municipality + ", Role: "
-					+ role + ", School Code: " + school;
+					+ role + ", School Code: " + school + ", LearningMaterialCharge: " + learningMaterialsCharge;
 		}
 	}
 

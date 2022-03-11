@@ -34,10 +34,11 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.security.auth.Subject;
 
@@ -136,7 +137,6 @@ public class RestDataConnectorTest {
 	/** The expected parent info values. */
 	private String expectedParentInfo;
 	
-	private Map<String,String> schoolRoleMappings;
 
 	/**
 	 * Initialize unit tests.
@@ -236,6 +236,7 @@ public class RestDataConnectorTest {
 		School school = new School(expectedSchoolId, expectedSchoolName, expectedParentOid, expectedParentName);
 		dataConnector.populateStructuredRole(attributes, school, role);
 		final IdPAttribute attribute = attributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID);
+		
 		Assert.assertNotNull(attribute);
 		Assert.assertEquals(attribute.getValues().size(), 1);
 		Assert.assertEquals(attribute.getValues().get(0).getNativeValue(), expected);
@@ -257,11 +258,36 @@ public class RestDataConnectorTest {
 		expectedRole.setRole("Oppilas");
 		expectedRole.setSchool("12345");
 
-		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345", "7C", "Oppilas", "7", "Helsinki");
+		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345", "7C", "Oppilas", null, "7", "Helsinki");
 		Assert.assertEquals(actualRoles.length, 1);
 		Assert.assertEquals(actualRoles[0].toString(), expectedRole.toString());
 	}
+	
+	/**
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testPopulateRolesDTOs_whenRoleWithLearningMaterialsCharge_shouldReturnRolesDTO() {
+		final RestDataConnector dataConnector = new RestDataConnector();
+		dataConnector.setResultAttributePrefix("");
+		Set<String> studentRoles = new HashSet<String>();
+		studentRoles.add("Oppilas");
+		dataConnector.setStudentRoles(studentRoles);
 
+		RolesDTO expectedRole = new UserDTO().new RolesDTO();
+		expectedRole.setGroup("7C");
+		expectedRole.setGroupLevel(7);
+		expectedRole.setMunicipality("Helsinki");
+		expectedRole.setRole("Oppilas");
+		expectedRole.setSchool("12345");
+		expectedRole.setLearningMaterialsCharge(0);
+
+		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345", "7C", "Oppilas", "0", "7", "Helsinki");
+		Assert.assertEquals(actualRoles.length, 1);
+		Assert.assertEquals(actualRoles[0].toString(), expectedRole.toString());
+	}
+	
 	/**
 	 * 
 	 * @throws Exception
@@ -293,7 +319,7 @@ public class RestDataConnectorTest {
 		expectedRole3.setSchool("34567");
 
 		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", "7C;5A;8B",
-				"Oppilas;Oppilas;Oppilas", "7", "Helsinki");
+				"Oppilas;Oppilas;Oppilas", null,  "7", "Helsinki");
 		Assert.assertEquals(actualRoles.length, 3);
 		Assert.assertEquals(actualRoles[0].toString(), expectedRole1.toString());
 		Assert.assertEquals(actualRoles[1].toString(), expectedRole2.toString());
@@ -330,7 +356,49 @@ public class RestDataConnectorTest {
 		expectedRole3.setRole("Oppilas");
 		expectedRole3.setSchool("34567");
 
-		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", "7C;5A;8B", "Oppilas", "7",
+		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", "7C;5A;8B", "Oppilas", null, "7",
+				"Helsinki");
+		Assert.assertEquals(actualRoles.length, 3);
+		Assert.assertEquals(actualRoles[0].toString(), expectedRole1.toString());
+		Assert.assertEquals(actualRoles[1].toString(), expectedRole2.toString());
+		Assert.assertEquals(actualRoles[2].toString(), expectedRole3.toString());
+	}
+	
+	@Test
+	public void testPopulateRolesDTOs_whenMultipleRolesWithLearningMaterialsCharges_shouldReturnThreeRolesDTO() {
+		final RestDataConnector dataConnector = new RestDataConnector();
+		dataConnector.setResultAttributePrefix("");
+		
+		Set<String> studentRoles = new HashSet<String>();
+		studentRoles.add("Oppilas");
+		dataConnector.setStudentRoles(studentRoles);
+		
+
+		RolesDTO expectedRole1 = new UserDTO().new RolesDTO();
+		expectedRole1.setGroup("7C");
+		expectedRole1.setGroupLevel(7);
+		expectedRole1.setMunicipality("Helsinki");
+		expectedRole1.setRole("Oppilas");
+		expectedRole1.setSchool("12345");
+		expectedRole1.setLearningMaterialsCharge(1);
+
+		RolesDTO expectedRole2 = new UserDTO().new RolesDTO();
+		expectedRole2.setGroup("5A");
+		expectedRole2.setGroupLevel(null);
+		expectedRole2.setMunicipality("Helsinki");
+		expectedRole2.setRole("Oppilas");
+		expectedRole2.setSchool("23456");
+		expectedRole2.setLearningMaterialsCharge(0);
+
+		RolesDTO expectedRole3 = new UserDTO().new RolesDTO();
+		expectedRole3.setGroup("8B");
+		expectedRole3.setGroupLevel(null);
+		expectedRole3.setMunicipality("Helsinki");
+		expectedRole3.setRole("Oppilas");
+		expectedRole3.setSchool("34567");
+		expectedRole3.setLearningMaterialsCharge(1);
+
+		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", "7C;5A;8B", "Oppilas", "1;0;1", "7",
 				"Helsinki");
 		Assert.assertEquals(actualRoles.length, 3);
 		Assert.assertEquals(actualRoles[0].toString(), expectedRole1.toString());
@@ -368,26 +436,26 @@ public class RestDataConnectorTest {
 		expectedRole4.setRole("Opettaja");
 		expectedRole4.setSchool("45678");
 
-		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", "7C;;", "Opettaja", null,
+		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", "7C;;", "Opettaja", null,  null,
 				"Helsinki");
 		Assert.assertEquals(actualRoles.length, 3);
 		Assert.assertEquals(actualRoles[0].toString(), expectedRole1.toString());
 		Assert.assertEquals(actualRoles[1].toString(), expectedRole2.toString());
 		Assert.assertEquals(actualRoles[2].toString(), expectedRole3.toString());
 
-		actualRoles = dataConnector.populateRolesDTOs("23456;12345;34567", ";7C;", "Opettaja", null, "Helsinki");
+		actualRoles = dataConnector.populateRolesDTOs("23456;12345;34567", ";7C;", "Opettaja", null,  null, "Helsinki");
 		Assert.assertEquals(actualRoles.length, 3);
 		Assert.assertEquals(actualRoles[0].toString(), expectedRole2.toString());
 		Assert.assertEquals(actualRoles[1].toString(), expectedRole1.toString());
 		Assert.assertEquals(actualRoles[2].toString(), expectedRole3.toString());
 
-		actualRoles = dataConnector.populateRolesDTOs("23456;34567;12345", ";;7C", "Opettaja", null, "Helsinki");
+		actualRoles = dataConnector.populateRolesDTOs("23456;34567;12345", ";;7C", "Opettaja", null,  null, "Helsinki");
 		Assert.assertEquals(actualRoles.length, 3);
 		Assert.assertEquals(actualRoles[0].toString(), expectedRole2.toString());
 		Assert.assertEquals(actualRoles[1].toString(), expectedRole3.toString());
 		Assert.assertEquals(actualRoles[2].toString(), expectedRole1.toString());
 
-		actualRoles = dataConnector.populateRolesDTOs("23456;34567;45678", ";;", "Opettaja", null, "Helsinki");
+		actualRoles = dataConnector.populateRolesDTOs("23456;34567;45678", ";;", "Opettaja", null,  null, "Helsinki");
 		Assert.assertEquals(actualRoles.length, 3);
 		Assert.assertEquals(actualRoles[0].toString(), expectedRole2.toString());
 		Assert.assertEquals(actualRoles[1].toString(), expectedRole3.toString());
@@ -424,20 +492,20 @@ public class RestDataConnectorTest {
 		// Assert.assertNull(actualRoles);
 
 		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", "7C;;", "Opettaja;Sijaisopettaja",
-				null, "Helsinki");
+				null,  null, "Helsinki");
 		Assert.assertNull(actualRoles);
 
-		actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", "7C;", "Opettaja", null, "Helsinki");
+		actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", "7C;", "Opettaja", null, null, "Helsinki");
 		Assert.assertNull(actualRoles);
 
-		actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", ";7C", "Opettaja", null, "Helsinki");
+		actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", ";7C", "Opettaja", null, null, "Helsinki");
 		Assert.assertNull(actualRoles);
 
 		actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", ";7C",
-				"Opettaja;Sijaisopettaja;Sijaisopettaja", null, "Helsinki");
+				"Opettaja;Sijaisopettaja;Sijaisopettaja", null, null, "Helsinki");
 		Assert.assertNull(actualRoles);
 
-		actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", ";", "Opettaja", null, "Helsinki");
+		actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", ";", "Opettaja", null, null, "Helsinki");
 		Assert.assertNull(actualRoles);
 	}
 
@@ -465,7 +533,7 @@ public class RestDataConnectorTest {
 		expectedRole3.setRole("Opettaja");
 		expectedRole3.setSchool("34567");
 
-		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", null, "Opettaja", null,
+		RolesDTO[] actualRoles = dataConnector.populateRolesDTOs("12345;23456;34567", null, "Opettaja", null, null,
 				"Helsinki");
 		Assert.assertEquals(actualRoles.length, 3);
 		Assert.assertEquals(actualRoles[0].toString(), expectedRole1.toString());
@@ -561,7 +629,7 @@ public class RestDataConnectorTest {
 			throws ComponentInitializationException, ResolutionException, Exception {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-1role-1attr3.json",
 				"restdc-min.xml");
-		Assert.assertEquals(resolvedAttributes.size(), 6);
+		Assert.assertEquals(resolvedAttributes.size(), 4);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
 				expectedOid);
 		Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
@@ -814,7 +882,22 @@ public class RestDataConnectorTest {
 		Assert.assertEquals(resolvedAttributes.size(), 24);
 		Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID).getValues().get(0).getNativeValue(),
 				"Testilä;99904;1D;Oppilas");
+		Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES));
+		//Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
+		//Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
+	}
+	
+	@Test
+	public void testResolveAttributes_whenTestiu_00001_2_shouldReturnValidUserDTO()
+			throws ComponentInitializationException, ResolutionException, Exception {
+		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("testiu_00001_2.json",
+				"restdc-min.xml");
 		//Assert.assertEquals(resolvedAttributes, "foo");
+		Assert.assertEquals(resolvedAttributes.size(), 26);
+		Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID).getValues().get(0).getNativeValue(),
+				"Testilä;99904;1D;Oppilas");
+		Assert.assertEquals(resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues().get(0).getNativeValue(), "1;99904");
 		//Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
 		//Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
 	}
@@ -825,19 +908,66 @@ public class RestDataConnectorTest {
 			throws ComponentInitializationException, ResolutionException, Exception {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("testiu_00071.json",
 				"restdc-min.xml");
-		//Assert.assertEquals(resolvedAttributes, "foo");
-		
+	
 		Assert.assertEquals(resolvedAttributes.size(), 20);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
 				"MPASSOID.6dfaba3e247015501de9c129a1a70926e0fa8f7f");
 
 		final List<IdPAttributeValue> structuredRoleWids = resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID)
 				.getValues();
-		Assert.assertEquals(structuredRoleWids.size(), 3);
+		final List<IdPAttributeValue> structuredRolesWithParentOid = resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID)
+				.getValues();
+		// Only the first school group is populated. Test users first group is empty
+		Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUPS));
 		Assert.assertEquals(structuredRoleWids.get(0).getNativeValue(), "Testilä;99904;;Opettaja");
 		Assert.assertEquals(structuredRoleWids.get(1).getNativeValue(), "Testilä;99905;4B;Sijaisopettaja");
 		Assert.assertEquals(structuredRoleWids.get(2).getNativeValue(), "Testilä;99906;6C;Sijaisopettaja");
+		Assert.assertEquals(structuredRolesWithParentOid.size(), 3);
+		Assert.assertEquals(structuredRolesWithParentOid.get(0).getNativeValue(), "1.2.246.562.10.45678901237;99904;;Opettaja");
+		Assert.assertEquals(structuredRolesWithParentOid.get(1).getNativeValue(), "1.2.246.562.10.45678901237;99905;4B;Sijaisopettaja");
+		Assert.assertEquals(structuredRolesWithParentOid.get(2).getNativeValue(), "1.2.246.562.10.78901234567;99906;6C;Sijaisopettaja");
 	}
+	
+	@Test
+	public void testResolveAttributes_whenStudentWithMultivalueAttributes_shouldReturnValidUserDTO()
+			throws ComponentInitializationException, ResolutionException, Exception {
+		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-MultivalueAttributes.json",
+				"restdc-min.xml");
+		//Assert.assertEquals(resolvedAttributes, "foo");
+		Assert.assertEquals(resolvedAttributes.size(), 26);
+		Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID).getValues().get(0).getNativeValue(),
+				"Testilä;99904;1D;Oppilas");
+		Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID).getValues().get(1).getNativeValue(),
+				"Testilä;99905;;Oppilas");
+		Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID).getValues().get(2).getNativeValue(),
+				"Testilä;99906;;Oppilas");
+		Assert.assertEquals(resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues().get(0).getNativeValue(), "1;99904");
+		Assert.assertEquals(resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues().get(1).getNativeValue(), "0;99905");
+		Assert.assertEquals(resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues().get(2).getNativeValue(), "1;99906");
+	}
+	
+	@Test
+	public void testResolveAttributes_whenUserWithMultivalueAttributes_v2_shouldReturnValidUserDTO()
+			throws ComponentInitializationException, ResolutionException, Exception {
+		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-MultivalueAttributes_2.json",
+				"restdc-min.xml");
+		//Assert.assertEquals(resolvedAttributes, "foo");
+		Assert.assertEquals(resolvedAttributes.size(), 26);
+		Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID).getValues().get(0).getNativeValue(),
+				"Testilä;99904;1D;Oppilas");
+		Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID).getValues().get(1).getNativeValue(),
+				"Testilä;99905;;Opettaja");
+		Assert.assertEquals(resolvedAttributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WID).getValues().get(2).getNativeValue(),
+				"Testilä;99906;;Oppilas");
+		Assert.assertEquals(resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues().get(0).getNativeValue(), "1;99904");
+		Assert.assertEquals(resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues().get(1).getNativeValue(), "0;99906");
+	}
+	
 	
 	/**
 	 * Tests {@link RestDataConnector} resolver attributes for test users.
@@ -975,11 +1105,34 @@ public class RestDataConnectorTest {
 				new ShibAttributePrincipal("schoolId", expectedSchoolId),
 				new ShibAttributePrincipal("groupLevel", "7"), 
 				new ShibAttributePrincipal("group", "7C"),
-				new ShibAttributePrincipal("role", "Oppilas"));
+				new ShibAttributePrincipal("role", "Oppilas"),
+				new ShibAttributePrincipal("learningMaterialsCharge", "1")
+				);
+		//Assert.assertEquals(resolvedAttributes, "foo");
+		Assert.assertEquals(resolvedAttributes.keySet().size(), 15);
+		Assert.assertNotNull(resolvedAttributes.get("testingPrefixusername").getValues().get(0).getNativeValue());
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_SCHOOL_CODES).getValues().get(0).getNativeValue(), expectedSchoolId);
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_GRADE).getValues().get(0).getNativeValue(), "7");
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_SCHOOL_ROLES).getValues().get(0).getNativeValue(), "Oppilas");
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_CLASSES).getValues().get(0).getNativeValue(), "7C");
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_MUNICIPALITY_CODE).getValues().get(0).getNativeValue(), "007");
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_MUNICIPALITIES).getValues().get(0).getNativeValue(), "Helsinki");
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues().get(0).getNativeValue(), "1");
+	}
+	
+	@Test
+	public void testPrincipals_whenUserHaveOneAttributeInAllRoleAttributes_2_shouldReturnValidUserDTO() throws Exception {
+		Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("restdc-full.xml",
+				new ShibAttributePrincipal("uid", "uidValue"), 
+				new ShibAttributePrincipal("schoolId", "99900"),
+				new ShibAttributePrincipal("groupLevel", "7"), 
+				new ShibAttributePrincipal("group", "7C"),
+				new ShibAttributePrincipal("role", "Oppilas")
+				);
 		//Assert.assertEquals(resolvedAttributes, "foo");
 		Assert.assertEquals(resolvedAttributes.keySet().size(), 14);
 		Assert.assertNotNull(resolvedAttributes.get("testingPrefixusername").getValues().get(0).getNativeValue());
-		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_SCHOOL_CODES).getValues().get(0).getNativeValue(), expectedSchoolId);
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_SCHOOL_CODES).getValues().get(0).getNativeValue(), "99900");
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_GRADE).getValues().get(0).getNativeValue(), "7");
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_SCHOOL_ROLES).getValues().get(0).getNativeValue(), "Oppilas");
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_CLASSES).getValues().get(0).getNativeValue(), "7C");
@@ -994,9 +1147,11 @@ public class RestDataConnectorTest {
 				new ShibAttributePrincipal("schoolId", expectedSchoolId + ";" + expectedSchoolId2),
 				new ShibAttributePrincipal("groupLevel", "7"), 
 				new ShibAttributePrincipal("group", "7C;8A"),
-				new ShibAttributePrincipal("role", "Oppilas"));
+				new ShibAttributePrincipal("role", "Oppilas"),
+				new ShibAttributePrincipal("learningMaterialsCharge", "1")
+				);
 		//Assert.assertEquals(resolvedAttributes, "foo");
-		Assert.assertEquals(resolvedAttributes.keySet().size(), 14);
+		Assert.assertEquals(resolvedAttributes.keySet().size(), 15);
 		Assert.assertNotNull(resolvedAttributes.get("testingPrefixusername").getValues().get(0).getNativeValue());
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_SCHOOL_CODES).getValues().get(0).getNativeValue(), expectedSchoolId + ";" + expectedSchoolId2);
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_GRADE).getValues().get(0).getNativeValue(), "7");
@@ -1004,7 +1159,28 @@ public class RestDataConnectorTest {
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_CLASSES).getValues().get(0).getNativeValue(), "7C;8A");
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_MUNICIPALITY_CODE).getValues().get(0).getNativeValue(), "007");
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_MUNICIPALITIES).getValues().get(0).getNativeValue(), "Helsinki");
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues().get(0).getNativeValue(), "1");
 	}
+	
+	@Test
+	public void testPrincipals_whenUserHaveMultipleValueAttributeInAllRoleAttributesV2_shouldReturnValidUserDTO() throws Exception {
+		Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("restdc-full.xml",
+				new ShibAttributePrincipal("uid", "uidValue"), 
+				new ShibAttributePrincipal("schoolId", expectedSchoolId + ";" + expectedSchoolId2),
+				new ShibAttributePrincipal("groupLevel", "7"), 
+				new ShibAttributePrincipal("group", "7C;8A"),
+				new ShibAttributePrincipal("role", "Opettaja"));
+		//Assert.assertEquals(resolvedAttributes, "foo");
+		Assert.assertEquals(resolvedAttributes.keySet().size(), 14);
+		Assert.assertNotNull(resolvedAttributes.get("testingPrefixusername").getValues().get(0).getNativeValue());
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_SCHOOL_CODES).getValues().get(0).getNativeValue(), expectedSchoolId + ";" + expectedSchoolId2);
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_GRADE).getValues().get(0).getNativeValue(), "7");
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_SCHOOL_ROLES).getValues().get(0).getNativeValue(), "Opettaja");
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_CLASSES).getValues().get(0).getNativeValue(), "7C;8A");
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_MUNICIPALITY_CODE).getValues().get(0).getNativeValue(), "007");
+		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_MUNICIPALITIES).getValues().get(0).getNativeValue(), "Helsinki");
+	}
+	
 
 	@Test
 	public void testPrincipals() throws Exception {
@@ -1012,8 +1188,8 @@ public class RestDataConnectorTest {
 				new ShibAttributePrincipal("uid", "uidValue"),
 				new ShibAttributePrincipal("schoolId", expectedSchoolId),
 				new ShibAttributePrincipal("role", "Opettaja"));
-		Assert.assertEquals(resolvedAttributes.keySet().size(), 10);
 		//Assert.assertEquals(resolvedAttributes, "foo");
+		Assert.assertEquals(resolvedAttributes.keySet().size(), 10);
 		Assert.assertNotNull(resolvedAttributes.get("testingPrefixusername").getValues().get(0).getNativeValue());
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_SCHOOL_CODES).getValues().get(0).getNativeValue(), expectedSchoolId);
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_SCHOOL_ROLES).getValues().get(0).getNativeValue(), "Opettaja");

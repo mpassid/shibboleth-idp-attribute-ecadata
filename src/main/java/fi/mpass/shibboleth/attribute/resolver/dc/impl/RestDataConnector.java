@@ -28,6 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -123,7 +124,9 @@ public class RestDataConnector extends AbstractDataConnector {
 	/** The attribute id for the grade of the user.
 	 *  Will replace groupLevels in the future. */
 	public static final String ATTR_ID_GRADE = "groupLevel";
-
+	
+	public static final String ATTR_ID_LEARNINGMATERIALSCHARGES = "learningMaterialsCharges";
+	
 	/** The attribute id for the schools. */
 	public static final String ATTR_ID_SCHOOLS = "schools";
 	
@@ -210,10 +213,20 @@ public class RestDataConnector extends AbstractDataConnector {
 	private HttpClientBuilder httpClientBuilder;
 	
 	/**
-	 * The map used for mappaing school roles to the roles used in MPASSid.
+	 * The map used for mapping school roles to the roles used in MPASSid.
 	 * The key is the received role and the value is the role which  */
 	private Map<String,String> schoolRoleMappings;
+	
+	/**
+	 * The school roles that are allowed in MPASSid-role attributes.
+	 */
+	private Set<String> allowedSchoolRoles;
 
+	/**
+	 * The school roles which are student role.
+	 */
+	private Set<String> studentRoles;
+		
 	/**
 	 * The map for constructing attributes directly from session {@link Principal}s.
 	 * The key is the id and the value contains attribute to principal mappings.
@@ -246,6 +259,8 @@ public class RestDataConnector extends AbstractDataConnector {
 		principalMappings = Collections.emptyMap();
 		staticValues = Collections.emptyMap();
 		schoolRoleMappings = Collections.emptyMap();
+		allowedSchoolRoles = Collections.emptySet();
+		studentRoles = Collections.emptySet();
 	}
 
 	/**
@@ -279,6 +294,34 @@ public class RestDataConnector extends AbstractDataConnector {
 	
 	public Map<String,String> getSchoolRoleMappings() {
 		return schoolRoleMappings;
+	}
+	
+	/**
+	 * 
+	 */
+	public Set<String> getAllowedSchoolRoles() {
+		return allowedSchoolRoles;
+	}
+	
+	/**
+	 * 
+	 */
+	public void setAllowedSchoolRoles(final Set<String> roles) {
+		allowedSchoolRoles = roles;
+	}
+	
+	/**
+	 * 
+	 */
+	public Set<String> getStudentRoles() {
+		return studentRoles;
+	}
+	
+	/**
+	 * 
+	 */
+	public void setStudentRoles(final Set<String> roles) {
+		studentRoles = roles;
 	}
 
 	/** {@inheritDoc} */
@@ -322,10 +365,14 @@ public class RestDataConnector extends AbstractDataConnector {
 				final String municipality = ecaUser.getAttribute(ATTR_ID_MUNICIPALITIES) != null
 						? ecaUser.getAttribute(ATTR_ID_MUNICIPALITIES).getValue()
 						: null;
+				final String learningMaterialsCharge = ecaUser.getAttribute(ATTR_ID_LEARNINGMATERIALSCHARGES) != null
+						? ecaUser.getAttribute(ATTR_ID_LEARNINGMATERIALSCHARGES).getValue()
+						: null;
 
 				if (schoolIds != null && schoolRoles != null) {
-					log.debug("Trying to set RoleDTOs.");
-					ecaUser.setRoles(populateRolesDTOs(schoolIds, groups, schoolRoles, groupLevel, municipality));
+					log.debug("Trying to set RoleDTOs");
+					log.debug("Values: learningMaterialsCharge {}", learningMaterialsCharge);
+					ecaUser.setRoles(populateRolesDTOs(schoolIds, groups, schoolRoles, learningMaterialsCharge, groupLevel, municipality));
 				} else {
 					log.debug("Could not set RolesDTO. Didn't find any schools or roles.");
 				}
@@ -427,6 +474,12 @@ public class RestDataConnector extends AbstractDataConnector {
 							schoolIds.setValue(principal.getValue());
 							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), schoolIds));
 							break;
+						case ATTR_ID_LEARNINGMATERIALSCHARGES:
+							final AttributesDTO learningMaterialCharges = ecaUser.new AttributesDTO();
+							learningMaterialCharges.setName(ATTR_ID_LEARNINGMATERIALSCHARGES);
+							learningMaterialCharges.setValue(principal.getValue());
+							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learningMaterialCharges));
+							break;
 						default:
 							break;
 						}
@@ -441,7 +494,7 @@ public class RestDataConnector extends AbstractDataConnector {
 	}
 	
 	/**
-	 * Helper method to split multivalue attribute values with dedfault separator.
+	 * Helper method to split multi-value attribute values with default separator.
 	 * 
 	 * @param stringToSplit
 	 * @return
@@ -452,7 +505,7 @@ public class RestDataConnector extends AbstractDataConnector {
 	}
 	
 	/**
-	 * Helper method to split multivalue attribute values.
+	 * Helper method to split multi-value attribute values.
 	 * 
 	 * @param stringToSplit
 	 * @param separator
@@ -464,7 +517,7 @@ public class RestDataConnector extends AbstractDataConnector {
 		
 		if (StringSupport.trimOrNull(stringToSplit) != null)
 		{
-			arrStr = stringToSplit.split(";", -1);
+			arrStr = stringToSplit.split(separator, -1);
 
 			for (int i = 0; i < arrStr.length; i++) {
 
@@ -474,15 +527,33 @@ public class RestDataConnector extends AbstractDataConnector {
 		
 		return arrStr;
 	}
-
+	
+	
+	/**
+	 * Populates RolesDTOs based data received from parameters.
+	 * 
+	 * @param schoolIds
+	 * @param groups
+	 * @param schoolRoles
+	 * @param learningMaterialsCharges
+	 * @param groupLevels
+	 * @param municipality
+	 * @return
+	 */
 	protected RolesDTO[] populateRolesDTOs(@Nonnull final String schoolIds, final String groups,
-			@Nonnull final String schoolRoles, final String groupLevels, final String municipality) {
+			@Nonnull final String schoolRoles, final String learningMaterialsCharges, final String groupLevels, final String municipality) {
 
-		String[] arrSchoolIds = Constraint.isNotNull(splitMultivalueAttribute(schoolIds), "SchoolIds cannot be null.");
-		String[] arrGroups = StringSupport.trimOrNull(groups) != null ? splitMultivalueAttribute(groups)
+		final String[] arrSchoolIds = Constraint.isNotNull(splitMultivalueAttribute(schoolIds), "SchoolIds cannot be null.");
+		final String[] arrGroups = StringSupport.trimOrNull(groups) != null ? splitMultivalueAttribute(groups)
 				: new String[0];
-		String[] arrSchoolRoles = Constraint.isNotNull(splitMultivalueAttribute(schoolRoles),
+		final String[] arrSchoolRoles = Constraint.isNotNull(splitMultivalueAttribute(schoolRoles),
 				"SchoolRoles cannot be null.");
+		
+		String[] arrLearningMaterialsCharge = null;
+
+		if (learningMaterialsCharges != null) {
+			arrLearningMaterialsCharge = splitMultivalueAttribute(learningMaterialsCharges);
+		}
 
 		log.debug("Populating rolesDTOs.");
 		if (arrSchoolIds.length >= 1 && arrSchoolRoles.length >= 1) {
@@ -502,9 +573,9 @@ public class RestDataConnector extends AbstractDataConnector {
 				rulesMatch = true;
 				log.debug("Found matching rule: One school role and as many school groups than school ids.");
 			} else {
-				log.debug("No of the rules for rolesDTOs did not match.");
+				log.debug("None of the rules for rolesDTOs did not match.");
 			}
-
+			
 			if (rulesMatch) {
 
 				final RolesDTO[] rolesDTOs = new RolesDTO[arrSchoolIds.length];
@@ -517,10 +588,10 @@ public class RestDataConnector extends AbstractDataConnector {
 
 					if (arrSchoolRoles.length == 1) {
 						rolesDTO.setRole(arrSchoolRoles[0]);
-						log.debug("Set School Role {}", arrSchoolIds[0]);
+						log.debug("Set School Role {}", arrSchoolRoles[0]);
 					} else {
 						rolesDTO.setRole(arrSchoolRoles[i]);
-						log.debug("Set School Role {}", arrSchoolIds[i]);
+						log.debug("Set School Role {}", arrSchoolRoles[i]);
 					}
 
 					if (StringSupport.trimOrNull(municipality) != null) {
@@ -542,10 +613,44 @@ public class RestDataConnector extends AbstractDataConnector {
 							rolesDTO.setGroupLevel(Integer.parseInt(StringSupport.trimOrNull(groupLevels)));
 							log.debug("Set School Group Level {}", groupLevels);
 						} catch (NumberFormatException e) {
-							log.warn("Coult not parse given group level {} to an integer", groupLevels);
+							log.warn("Could not parse given group level {} to an integer", groupLevels);
 						}
 					}
+					
+					// Learning Materials Charge attribute
+					String roleInSchool = schoolRoleMappings.containsKey(rolesDTO.getRole().toLowerCase()) ? schoolRoleMappings.get(rolesDTO.getRole().toLowerCase()) : rolesDTO.getRole();
+					
+					if (studentRoles.stream().anyMatch(roleInSchool::equalsIgnoreCase)
+							&& arrLearningMaterialsCharge != null) {
+						log.trace("Trying to set learningMaterialCharge to RolesDTO. User role {}", roleInSchool);
+						int index = -1;
+
+						if (arrLearningMaterialsCharge.length == 1) {
+							index = 0;
+						} else if (arrLearningMaterialsCharge.length == arrSchoolIds.length) {
+							index = i;
+						} else {
+							log.debug("Count of learningMaterialsCharge attributes ({}) don't match to schoolId attributes ({}).", arrLearningMaterialsCharge.length, arrSchoolIds.length);
+						}
+												
+						try {
+							if (index != -1) {
+								int value = (Integer.parseInt(StringSupport.trimOrNull(arrLearningMaterialsCharge[index])));
+								log.trace("Value of learningMaterialCharge is {}", value);
+								if (value == 0 || value == 1) {
+									rolesDTO.setLearningMaterialsCharge(value);
+									log.trace("LearningMaterialCharge is set to {}", rolesDTO.getLearningMaterialsCharge());
+								}
+							}
+						} catch (NumberFormatException e) {
+								log.warn("Could not parse given learning material charge {} to an integer", arrLearningMaterialsCharge[0]);
+						}	
+					} else {
+						log.trace("User role {} didn't match to student roles or didn't receive learningMaterialsCharge attribute. Nothing to do.", roleInSchool);
+					}
+					
 					log.debug("Add role to RoleDTO");
+					log.trace("Value of the role is {}", rolesDTO.toString());
 					rolesDTOs[i] = rolesDTO;
 				}
 				
@@ -659,7 +764,25 @@ public class RestDataConnector extends AbstractDataConnector {
 		populateAttribute(attributes, ATTR_ID_SURNAME, ecaUser.getLastName());
 		if (ecaUser.getRoles() != null) {
 			log.debug("Roles found: {}", ecaUser.getRoles().length);
+			
 			for (int i = 0; i < ecaUser.getRoles().length; i++) {
+				
+				// If allowed school roles are not provided then every role is accepted
+				if (ecaUser.getRoles()[i].getRole() == null) {
+					continue;
+				}
+					
+				String roleInSchool = schoolRoleMappings.containsKey(ecaUser.getRoles()[i].getRole().toLowerCase()) ? 
+						schoolRoleMappings.get(ecaUser.getRoles()[i].getRole().toLowerCase()) : ecaUser.getRoles()[i].getRole();
+				
+				if (!allowedSchoolRoles.isEmpty() &&
+						!allowedSchoolRoles.stream().anyMatch(roleInSchool::equalsIgnoreCase) ) {
+					
+					log.debug("Provided role {} is not allowed. Moving to next roleDTO.", ecaUser.getRoles()[i].getRole());
+					continue;
+				}
+			
+				
 				final String rawSchool = ecaUser.getRoles()[i].getSchool();
 				final School school = findSchool(rawSchool, nameApiBaseUrl);
 				if (school == null) {
@@ -668,6 +791,7 @@ public class RestDataConnector extends AbstractDataConnector {
 						populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);
 						populateStructuredRole(attributes, "", rawSchool, ecaUser.getRoles()[i]);
 					} else {
+						// TODO:Tämä pitäisi poistaa. Koulun nimi lähettään vain jos se on tullut opintopolusta.
 						populateAttribute(attributes, ATTR_ID_SCHOOLS, rawSchool);
 						populateStructuredRole(attributes, rawSchool, "", ecaUser.getRoles()[i]);
 					}
@@ -681,8 +805,12 @@ public class RestDataConnector extends AbstractDataConnector {
 							school.getParentOid() + ";" + school.getParentName());
 					populateStructuredRole(attributes, school.getName(), rawSchool, ecaUser.getRoles()[i]);
 					populateStructuredRole(attributes, school, ecaUser.getRoles()[i]);
+					
+					if (ecaUser.getRoles()[i].getLearningMaterialsCharge() != null) {
+						populateAttribute(attributes, ATTR_ID_LEARNINGMATERIALSCHARGES, ecaUser.getRoles()[i].getLearningMaterialsCharge() + ";" + school.getId());
+					}
 				}
-				//populateAttribute(attributes, ATTR_ID_GROUPS, ecaUser.getRoles()[i].getGroup());
+				
 				populateAttribute(attributes, ATTR_ID_ROLES, ecaUser.getRoles()[i].getRole());
 				populateAttribute(attributes, ATTR_ID_MUNICIPALITIES, ecaUser.getRoles()[i].getMunicipality());
 				
@@ -695,7 +823,7 @@ public class RestDataConnector extends AbstractDataConnector {
 					}
 				}
 			}
-		}
+		}	
 		if (ecaUser.getAttributes() != null) {
 			for (int i = 0; i < ecaUser.getAttributes().length; i++) {
 				final AttributesDTO attribute = ecaUser.getAttributes()[i];
@@ -735,7 +863,11 @@ public class RestDataConnector extends AbstractDataConnector {
 
 		final String structuredRoleWid = municipality + ";" + schoolId + ";" + group + ";" + aRole;
 		log.debug("Populating structuredRoleWid: {}", structuredRoleWid);
-		populateAttribute(attributes, ATTR_ID_STRUCTURED_ROLES_WID, structuredRoleWid);
+		if (structuredRoleWid.split(DEFAULT_ATTR_VALUE_SEPARATOR, -1).length == 4) {
+			populateAttribute(attributes, ATTR_ID_STRUCTURED_ROLES_WID, structuredRoleWid);
+		} else {
+			log.debug("StructuredRoleWid has too many components. Value {}", structuredRoleWid);
+		}
 	}
 
 	/**
@@ -760,11 +892,16 @@ public class RestDataConnector extends AbstractDataConnector {
 			} else {
 				roleInSchool = "";
 			}
-			
 			final String structuredRoleWithParentOid = school.getParentOid() + ";" + school.getId() + ";" + group + ";"
 					+ roleInSchool;
 			log.debug("Populating structuredRoleWithParentOid: {}", structuredRoleWithParentOid);
-			populateAttribute(attributes, ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID, structuredRoleWithParentOid);
+			
+			//populateAttribute(attributes, ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID, structuredRoleWithParentOid);
+			if (structuredRoleWithParentOid.split(DEFAULT_ATTR_VALUE_SEPARATOR, -1).length == 4) {
+				populateAttribute(attributes, ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID, structuredRoleWithParentOid);
+			} else {
+				log.debug("structuredRoleWithParentOid has too many components. Value {}", structuredRoleWithParentOid);
+			}
 		} else {
 			log.debug("Could not populate role with education provider oid");
 		}

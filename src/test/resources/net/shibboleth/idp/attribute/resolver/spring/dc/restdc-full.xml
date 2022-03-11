@@ -15,10 +15,13 @@
     nameApiBaseUrl="http://localhost:8997/mock_" 
     resultAttributePrefix="testingPrefix" 
     disregardTLSCertificate="true" 
-    nameApiCallerId="testingCallerId">
+    nameApiCallerId="testingCallerId"
+    allowedSchoolRoles="Opettaja,Oppilas,Rehtori,Sijaisopettaja,Koulusihteeri,Hallintohenkilö"
+    studentRoles="Oppilas">
     <eca:SchoolRoleMappings>
     	<eca:RoleMapping inputRole="teacher" outputRole="Opettaja"/>
     	<eca:RoleMapping inputRole="student" outputRole="Oppilas"/>
+    	<eca:RoleMapping inputRole="staff" outputRole="Hallintohenkilö"/>
     </eca:SchoolRoleMappings>
     <eca:DirectIdpAttributes idpId="idpIdValue" municipalityCode="007" municipality="Helsinki">
         <eca:Mapping attributeName="username" principalName="uid"/>
@@ -28,5 +31,6 @@
         <eca:Mapping attributeName="groups" principalName="group"/>
         <eca:Mapping attributeName="schoolIds" principalName="schoolId"/>
         <eca:Mapping attributeName="groupLevels" principalName="groupLevel"/>
+        <eca:Mapping attributeName="learningMaterialsCharges" principalName="learningMaterialsCharge"/>
     </eca:DirectIdpAttributes>
 </resolver:DataConnector>

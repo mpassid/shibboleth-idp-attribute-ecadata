@@ -23,6 +23,7 @@
 
 package fi.mpass.shibboleth.attribute.resolver.spring.dc;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,14 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
         String nameApiCallerId = element.getAttributeNS(null, "nameApiCallerId");
         if (StringSupport.trimOrNull(nameApiCallerId) != null) {
         	builder.addPropertyValue("nameApiCallerId", nameApiCallerId);
+        }
+        String allowedSchoolRoles = element.getAttributeNS(null, "allowedSchoolRoles");
+        if (StringSupport.trimOrNull(allowedSchoolRoles) != null) {
+        	builder.addPropertyValue("allowedSchoolRoles", Arrays.asList(allowedSchoolRoles.split(",")));
+        }
+        String studentRoles = element.getAttributeNS(null, "studentRoles");
+        if (StringSupport.trimOrNull(studentRoles) != null) {
+        	builder.addPropertyValue("studentRoles", Arrays.asList(studentRoles.split(",")));
         }
         final List<Element> directIdpAttributes = ElementSupport.getChildElements(element, DIRECT_IDP_ATTRIBUTES_NAME);
         if (directIdpAttributes != null) {

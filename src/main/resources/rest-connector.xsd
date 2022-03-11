@@ -114,14 +114,28 @@ THE SOFTWARE.
                 <attribute name="nameApiBaseUrl" type="string" use="optional">
                     <annotation>
                         <documentation>
-                            Set to the base URL for the API used for resolving school name via its id. Default to Finnish Opintopolku API.
+                            The base URL for the API used for resolving school name via its id. Default to Finnish Opintopolku API.
                         </documentation>
                     </annotation>
                 </attribute>
                 <attribute name="nameApiCallerId" type="string" use="optional">
                     <annotation>
                         <documentation>
-                            Set to the caller-id used with the Finnish Opintopolku API.
+                            The caller-id used with the Finnish Opintopolku API.
+                        </documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="allowedSchoolRoles" type="string" use="optional">
+                    <annotation>
+                        <documentation>
+                            The allowed school roles. Delimeter for multiple roles is | character.
+                        </documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="studentRoles" type="string" use="optional">
+                    <annotation>
+                        <documentation>
+                             The allowed school roles. Delimeter for multiple roles is | character.
                         </documentation>
                     </annotation>
                 </attribute>

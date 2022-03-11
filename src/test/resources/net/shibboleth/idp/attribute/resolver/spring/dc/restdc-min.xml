@@ -13,7 +13,9 @@
     hookAttribute="testingHookAttribute"
     idpId="testingIdpId"
     token="testingToken"
-    nameApiBaseUrl="http://localhost:8997/mock_">
+    nameApiBaseUrl="http://localhost:8997/mock_"
+    allowedSchoolRoles="Opettaja,Oppilas,Rehtori,Sijaisopettaja,Koulusihteeri,Hallintohenkilö"
+    studentRoles="Oppilas">
     <eca:SchoolRoleMappings>
     	<eca:RoleMapping inputRole="teacher" outputRole="Opettaja"/>
     	<eca:RoleMapping inputRole="student" outputRole="Oppilas"/>

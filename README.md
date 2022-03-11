@@ -6,15 +6,15 @@
 
 ## Overview
 
-This module is a [Data Connector](https://wiki.shibboleth.net/confluence/display/IDP30/Attribute+Resolver)
-plugin for [Shibboleth Identity Provider v3](https://wiki.shibboleth.net/confluence/display/IDP30/Home). It
+This module is a [Data Connector](https://shibboleth.atlassian.net/wiki/spaces/IDP4/pages/1265631864/AttributeResolver)
+plugin for [Shibboleth Identity Provider v4](https://shibboleth.atlassian.net/wiki/spaces/IDP4/). It
 implements the user attribute resolution from ECA Auth Data -module, as defined in [EduCloud Alliance's](https://portal.educloudalliance.org/) [ECA Authentication](https://github.com/educloudalliance/eca-docs/blob/master/auth/index.rst) standard. In short, this module
 resolves the user attributes via a specific REST API, using two attributes as a hook to the user object stored
 behind the API. In the ECA Auth standard context, those two attributes are [AuthnID](https://github.com/mpassid/shibboleth-idp-attribute-authnid) and IdP identifier.
 
 ## Prerequisities and compilation
 
-- Java 7+
+- Java 11+
 - [Apache Maven 3](https://maven.apache.org/)
 
 ```

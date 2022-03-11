@@ -1,12 +1,12 @@
 {
-	"username": "MPASSOID.6dfaba3e247015501de9c129a1a70926e0fa8f7f",
-	"first_name": "Testi71",
-	"last_name": "Opettaja71",
+	"username": "MPASSOID.3e62d573058fa45216cd011ec67aa31552750baa",
+	"first_name": "Testi1",
+	"last_name": "Oppilas1",
 	"roles": [],
 	"attributes": [
 		{
 			"name": "legacyId",
-			"value": "5fafca76ac5dbae4c611af19a82860a7"
+			"value": "d0a096a60e88aebe7ca20a631cf4673d"
 		},
 		{
 			"name": "municipalityCode",
@@ -18,23 +18,27 @@
 		},
 		{
 			"name": "learnerId",
-			"value": null
+			"value": "1.2.246.562.24.10000000016"
 		},
 		{
 			"name": "groupLevel",
-			"value": null
+			"value": "1"
 		},
 		{
 			"name": "schoolCodes",
-			"value": "99904;99905;99906"
+			"value": "99904"
 		},
 		{
 			"name": "schoolGroups",
-			"value": ";4B;6C"
+			"value": "1D"
 		},
 		{
 			"name": "schoolRoles",
-			"value": "teacher;Sijaisopettaja;Sijaisopettaja"
+			"value": "Oppilas"
+		},
+		{
+			"name": "learningMaterialsCharges",
+			"value": "1"
 		}
 	]
 }

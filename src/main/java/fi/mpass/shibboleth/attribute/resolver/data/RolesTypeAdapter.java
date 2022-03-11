@@ -35,6 +35,8 @@ public class RolesTypeAdapter extends TypeAdapter<RolesDTO>{
 		out.value(roles.getGroup());
 		out.name("groupLevel");
 		out.value(roles.getGroupLevel());
+		out.name("learningMaterialsCharges");
+		out.value(roles.getLearningMaterialsCharge());
 		out.name("municipality");
 		out.value(roles.getMunicipality());
 	}
@@ -74,6 +76,15 @@ public class RolesTypeAdapter extends TypeAdapter<RolesDTO>{
 					}
 					catch (IllegalStateException | NumberFormatException e) {
 						logger.warn("Group level is not int: {}", in.nextString());
+					};
+					break;
+				}
+				case "learningMaterialsCharges" : { 
+					try {
+						roles.setLearningMaterialsCharge(in.nextInt());
+					}
+					catch (IllegalStateException | NumberFormatException e) {
+						logger.warn("Learning materials charge is not int: {}", in.nextString());
 					};
 					break;
 				}
