@@ -8,6 +8,7 @@
             "school": "12345",
             "group": "7C",
             "groupLevel": "7",
+            "learningMaterialsCharge": 0,
             "municipality": "Great City"
         },
         { 
@@ -15,6 +16,7 @@
             "school": "23456",
             "group": "9B",
             "groupLevel": "9",
+            "learningMaterialsCharge": 1,
             "municipality": "Rival City"
         }
     ],

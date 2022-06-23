@@ -379,6 +379,7 @@ public class RestDataConnector extends AbstractDataConnector {
 			}
 			populateAttributes(attributes, ecaUser);
 		}
+		
 		return attributes;
 	}
 
@@ -807,7 +808,7 @@ public class RestDataConnector extends AbstractDataConnector {
 					populateStructuredRole(attributes, school, ecaUser.getRoles()[i]);
 					
 					if (ecaUser.getRoles()[i].getLearningMaterialsCharge() != null) {
-						populateAttribute(attributes, ATTR_ID_LEARNINGMATERIALSCHARGES, ecaUser.getRoles()[i].getLearningMaterialsCharge() + ";" + school.getId());
+						populateAttribute(attributes, ATTR_ID_LEARNINGMATERIALSCHARGES, ecaUser.getRoles()[i].getLearningMaterialsCharge().toString() + ";" + school.getId());
 					}
 				}
 				
@@ -896,7 +897,6 @@ public class RestDataConnector extends AbstractDataConnector {
 					+ roleInSchool;
 			log.debug("Populating structuredRoleWithParentOid: {}", structuredRoleWithParentOid);
 			
-			//populateAttribute(attributes, ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID, structuredRoleWithParentOid);
 			if (structuredRoleWithParentOid.split(DEFAULT_ATTR_VALUE_SEPARATOR, -1).length == 4) {
 				populateAttribute(attributes, ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID, structuredRoleWithParentOid);
 			} else {

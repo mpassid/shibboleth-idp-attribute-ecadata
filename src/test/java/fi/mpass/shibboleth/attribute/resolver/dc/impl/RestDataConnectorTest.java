@@ -651,7 +651,7 @@ public class RestDataConnectorTest {
 			throws ComponentInitializationException, ResolutionException, Exception {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-1attr.json",
 				"restdc-min.xml");
-		Assert.assertEquals(resolvedAttributes.size(), 17);
+		Assert.assertEquals(resolvedAttributes.size(), 18);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
 				expectedOid);
 
@@ -685,6 +685,11 @@ public class RestDataConnectorTest {
 				.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_INFOS).getValues();
 		Assert.assertEquals(educationProviderOids.size(), 1);
 		Assert.assertTrue(verifyAttributeValueExists(educationProviderInfos, expectedParentInfo));
+		
+		final List<IdPAttributeValue> learningMaterialCharge = resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues();
+		Assert.assertEquals(educationProviderNames.size(), 1);
+		Assert.assertTrue(verifyAttributeValueExists(learningMaterialCharge, "1;12345"));
 	}
 	
 	@Test
@@ -811,7 +816,7 @@ public class RestDataConnectorTest {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-2role-2attr.json",
 				"restdc-min.xml");
 		//Assert.assertEquals(resolvedAttributes, "foo");
-		Assert.assertEquals(resolvedAttributes.size(), 18);
+		Assert.assertEquals(resolvedAttributes.size(), 19);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
 				expectedOid);
 
@@ -829,9 +834,14 @@ public class RestDataConnectorTest {
 				.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_NAME).getValues();
 		Assert.assertEquals(educationProviderNames.size(), 2);
 		Assert.assertTrue(verifyAttributeValueExists(educationProviderNames, expectedParentName, expectedParentName2));
+		
+		final List<IdPAttributeValue> learningMaterialCharge = resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues();
+		Assert.assertEquals(educationProviderNames.size(), 2);
+		Assert.assertTrue(verifyAttributeValueExists(learningMaterialCharge, "0;12345"));
+		Assert.assertTrue(verifyAttributeValueExists(learningMaterialCharge, "1;23456"));
 	}
 	
-	// TODO: Korjaa kommentti
 	/**
 	 * Tests {@link RestDataConnector} with minimum configuration, with two student
 	 * roles for the user.

@@ -23,15 +23,14 @@
 
 package fi.mpass.shibboleth.attribute.resolver.spring.dc;
 
-import net.shibboleth.idp.attribute.resolver.spring.BaseAttributeDefinitionParserTest;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import fi.mpass.shibboleth.attribute.resolver.dc.impl.RestDataConnector;
-import fi.mpass.shibboleth.attribute.resolver.spring.dc.RestDataConnectorParser;
+import net.shibboleth.idp.attribute.resolver.spring.BaseAttributeDefinitionParserTest;
+import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 
 /**
  * Unit tests for {@link RestDataConnectorParser}.

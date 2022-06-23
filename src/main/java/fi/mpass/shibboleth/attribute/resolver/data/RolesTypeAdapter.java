@@ -35,7 +35,7 @@ public class RolesTypeAdapter extends TypeAdapter<RolesDTO>{
 		out.value(roles.getGroup());
 		out.name("groupLevel");
 		out.value(roles.getGroupLevel());
-		out.name("learningMaterialsCharges");
+		out.name("learningMaterialsCharge");
 		out.value(roles.getLearningMaterialsCharge());
 		out.name("municipality");
 		out.value(roles.getMunicipality());
@@ -79,7 +79,7 @@ public class RolesTypeAdapter extends TypeAdapter<RolesDTO>{
 					};
 					break;
 				}
-				case "learningMaterialsCharges" : { 
+				case "learningMaterialsCharge" : { 
 					try {
 						roles.setLearningMaterialsCharge(in.nextInt());
 					}
@@ -89,6 +89,7 @@ public class RolesTypeAdapter extends TypeAdapter<RolesDTO>{
 					break;
 				}
 				case "municipality" : { roles.setMunicipality(in.nextString()); break; }
+				default: in.nextString(); break;
 			}
 		}
 		
