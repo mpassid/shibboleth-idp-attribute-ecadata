@@ -29,7 +29,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import fi.mpass.shibboleth.attribute.resolver.dc.impl.RestDataConnector;
-import net.shibboleth.idp.attribute.resolver.spring.BaseAttributeDefinitionParserTest;
+import net.shibboleth.idp.attribute.resolver.spring.testing.BaseAttributeDefinitionParserTest;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 
 /**

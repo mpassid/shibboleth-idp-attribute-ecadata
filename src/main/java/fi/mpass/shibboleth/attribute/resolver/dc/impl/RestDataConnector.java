@@ -177,7 +177,6 @@ public class RestDataConnector extends AbstractDataConnector {
 
 	public static final String ATTR_ID_EDUCATION_PROVIDER_NAME = "educationProviderNames";
 
-	// TODO: Oletus url ei taida enää toimia
 	/** The default base URL for fetching school info. */
 	public static final String DEFAULT_BASE_URL_SCHOOL_INFO = "https://virkailija.opintopolku.fi/koodisto-service/rest/codeelement/oppilaitosnumero_";
 
@@ -792,7 +791,6 @@ public class RestDataConnector extends AbstractDataConnector {
 						populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);
 						populateStructuredRole(attributes, "", rawSchool, ecaUser.getRoles()[i]);
 					} else {
-						// TODO:Tämä pitäisi poistaa. Koulun nimi lähettään vain jos se on tullut opintopolusta.
 						populateAttribute(attributes, ATTR_ID_SCHOOLS, rawSchool);
 						populateStructuredRole(attributes, rawSchool, "", ecaUser.getRoles()[i]);
 					}
