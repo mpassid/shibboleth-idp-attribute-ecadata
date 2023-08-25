@@ -103,6 +103,9 @@ public class RestDataConnector extends AbstractDataConnector {
 	/** The attribute id for the first name. */
 	public static final String ATTR_ID_FIRSTNAME = "firstName";
 
+	/** The attribute id for the nick name. */
+	public static final String ATTR_ID_NICKNAME = "nickName";
+
 	/** The attribute id for the last name. */
 	public static final String ATTR_ID_SURNAME = "surname";
 
@@ -135,6 +138,9 @@ public class RestDataConnector extends AbstractDataConnector {
 
 	/** The attribute id for the school ids. */
 	public static final String ATTR_ID_SCHOOL_IDS = "schoolIds";
+
+	/** The attribute id for the school ids. */
+	public static final String ATTR_ID_SCHOOL_OIDS = "schoolOids";
 
 	/** The attribute id for the school info. */
 	public static final String ATTR_ID_SCHOOL_INFOS = "schoolInfos";
@@ -215,6 +221,12 @@ public class RestDataConnector extends AbstractDataConnector {
 	 * The map used for mapping school roles to the roles used in MPASSid.
 	 * The key is the received role and the value is the role which  */
 	private Map<String,String> schoolRoleMappings;
+
+	/**
+	 * The map used for mapping MPASSid roles to the codes used in MPASSid.
+	 * The key is the received role and the value is the code which  */
+	private Map<String,String> schoolRoleCodeMappings;
+	
 	
 	/**
 	 * The school roles that are allowed in MPASSid-role attributes.
@@ -225,6 +237,11 @@ public class RestDataConnector extends AbstractDataConnector {
 	 * The school roles which are student role.
 	 */
 	private Set<String> studentRoles;
+
+	/**
+	 * The organisation types which are offices.
+	 */
+	private Set<String> officeTypes;
 		
 	/**
 	 * The map for constructing attributes directly from session {@link Principal}s.
@@ -258,8 +275,10 @@ public class RestDataConnector extends AbstractDataConnector {
 		principalMappings = Collections.emptyMap();
 		staticValues = Collections.emptyMap();
 		schoolRoleMappings = Collections.emptyMap();
+		schoolRoleCodeMappings = Collections.emptyMap();
 		allowedSchoolRoles = Collections.emptySet();
 		studentRoles = Collections.emptySet();
+		officeTypes = Collections.emptySet();
 	}
 
 	/**
@@ -293,6 +312,19 @@ public class RestDataConnector extends AbstractDataConnector {
 	
 	public Map<String,String> getSchoolRoleMappings() {
 		return schoolRoleMappings;
+	}
+
+	/**
+	 * Set the map for role codes.
+	 * 
+	 * @param mapping What to set.
+	 */
+	public void setSchoolRoleCodeMappings(final Map<String,String> mappings) {
+		schoolRoleCodeMappings = Constraint.isNotNull(mappings, "The map for Mpass roles cannot be null");
+	}
+	
+	public Map<String,String> getSchoolRoleCodeMappings() {
+		return schoolRoleCodeMappings;
 	}
 	
 	/**
@@ -427,6 +459,9 @@ public class RestDataConnector extends AbstractDataConnector {
 						case ATTR_ID_FIRSTNAME:
 							ecaUser.setFirstName(principal.getValue());
 							break;
+						case ATTR_ID_NICKNAME:
+							ecaUser.setNickName(principal.getValue());
+							break;	
 						case ATTR_ID_SURNAME:
 							ecaUser.setLastName(principal.getValue());
 							break;
@@ -762,6 +797,7 @@ public class RestDataConnector extends AbstractDataConnector {
 		populateAttribute(attributes, ATTR_ID_USERNAME, ecaUser.getUsername());
 		populateAttribute(attributes, ATTR_ID_FIRSTNAME, ecaUser.getFirstName());
 		populateAttribute(attributes, ATTR_ID_SURNAME, ecaUser.getLastName());
+		populateAttribute(attributes, ATTR_ID_NICKNAME, ecaUser.getNickName());
 		if (ecaUser.getRoles() != null) {
 			log.debug("Roles found: {}", ecaUser.getRoles().length);
 			
@@ -784,9 +820,10 @@ public class RestDataConnector extends AbstractDataConnector {
 			
 				
 				final String rawSchool = ecaUser.getRoles()[i].getSchool();
-				final School school = findSchool(rawSchool, nameApiBaseUrl);
-				if (school == null) {
-					log.debug("Didn't find any schools.");
+				final School organization = findSchool(rawSchool, nameApiBaseUrl);
+				
+				if (organization == null) {
+					log.debug("Didn't find any organization.");
 					if (StringUtils.isNumeric(rawSchool)) {
 						populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);
 						populateStructuredRole(attributes, "", rawSchool, ecaUser.getRoles()[i]);
@@ -795,19 +832,58 @@ public class RestDataConnector extends AbstractDataConnector {
 						populateStructuredRole(attributes, rawSchool, "", ecaUser.getRoles()[i]);
 					}
 				} else {
-					populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);
-					populateAttribute(attributes, ATTR_ID_SCHOOLS, school.getName());
-					populateAttribute(attributes, ATTR_ID_SCHOOL_INFOS, school.getId() + ";" + school.getName());
-					populateAttribute(attributes, ATTR_ID_EDUCATION_PROVIDER_OID, school.getParentOid());
-					populateAttribute(attributes, ATTR_ID_EDUCATION_PROVIDER_NAME, school.getParentName());
-					populateAttribute(attributes, ATTR_ID_EDUCATION_PROVIDER_INFOS,
-							school.getParentOid() + ";" + school.getParentName());
-					populateStructuredRole(attributes, school.getName(), rawSchool, ecaUser.getRoles()[i]);
-					populateStructuredRole(attributes, school, ecaUser.getRoles()[i]);
-					
-					if (ecaUser.getRoles()[i].getLearningMaterialsCharge() != null) {
-						populateAttribute(attributes, ATTR_ID_LEARNINGMATERIALSCHARGES, ecaUser.getRoles()[i].getLearningMaterialsCharge().toString() + ";" + school.getId());
+					final School school;
+					if(officeTypes.contains(organization.getOrganizationType())) {
+						school = findSchool(organization.getParentOid(), nameApiBaseUrl);
+						if (school == null) {
+							log.debug("Didn't find any school.");
+							if (StringUtils.isNumeric(rawSchool)) {
+								populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);
+								populateStructuredRole(attributes, "", rawSchool, ecaUser.getRoles()[i]);
+							} else {
+								populateAttribute(attributes, ATTR_ID_SCHOOLS, rawSchool);
+								populateStructuredRole(attributes, rawSchool, "", ecaUser.getRoles()[i]);
+							}
+						} else {
+							if(organization.getOid()!=null) {
+								populateAttribute(attributes, ATTR_ID_SCHOOL_INFOS, organization.getOid() + ";" + organization.getName());
+							}
+							school.setOfficeName(organization.getName());
+							school.setOfficeOid(organization.getOid());
+						}
+					} else {
+						school = organization;
 					}
+					if(school!=null) {
+						log.debug("Found {}",school);
+						if(school.getId()!=null){
+							populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, school.getId());
+							populateAttribute(attributes, ATTR_ID_SCHOOL_INFOS, school.getId() + ";" + school.getName());
+						}
+						if(school.getOid()!=null){
+							populateAttribute(attributes, ATTR_ID_SCHOOL_OIDS, school.getOid());
+							populateAttribute(attributes, ATTR_ID_SCHOOL_INFOS, school.getOid() + ";" + school.getName());
+						}
+						populateAttribute(attributes, ATTR_ID_SCHOOLS, school.getName());
+						if(school.getParentOid()!=null){
+							populateAttribute(attributes, ATTR_ID_EDUCATION_PROVIDER_OID, school.getParentOid());
+							populateAttribute(attributes, ATTR_ID_EDUCATION_PROVIDER_NAME, school.getParentName());
+							populateAttribute(attributes, ATTR_ID_EDUCATION_PROVIDER_INFOS,
+								school.getParentOid() + ";" + school.getParentName());
+						}
+						populateStructuredRole(attributes, school.getName(), rawSchool, ecaUser.getRoles()[i]);
+						populateStructuredRole(attributes, school, ecaUser.getRoles()[i]);
+						
+						if (ecaUser.getRoles()[i].getLearningMaterialsCharge() != null) {
+							if(school.getId()!=null) {
+								populateAttribute(attributes, ATTR_ID_LEARNINGMATERIALSCHARGES, ecaUser.getRoles()[i].getLearningMaterialsCharge().toString() + ";" + school.getId());
+							}
+							if(school.getOid()!=null) {
+								populateAttribute(attributes, ATTR_ID_LEARNINGMATERIALSCHARGES, ecaUser.getRoles()[i].getLearningMaterialsCharge().toString() + ";" + school.getOid());
+							}
+						}
+					}
+					
 				}
 				
 				populateAttribute(attributes, ATTR_ID_ROLES, ecaUser.getRoles()[i].getRole());
@@ -882,6 +958,8 @@ public class RestDataConnector extends AbstractDataConnector {
 			@Nonnull final School school, @Nonnull final UserDTO.RolesDTO role) {
 		if (school.getId() != null && school.getParentOid() != null) {
 			final String group = role.getGroup() != null ? role.getGroup() : "";
+			final String schoolOid = school.getOid() != null ? school.getOid() : "";
+			final String officeOid = school.getOfficeOid() != null ? school.getOfficeOid() : "";
 
 			String roleInSchool;
 			
@@ -891,11 +969,19 @@ public class RestDataConnector extends AbstractDataConnector {
 			} else {
 				roleInSchool = "";
 			}
+
+			String codeInSchool;
+			if (roleInSchool != "") {
+				codeInSchool = schoolRoleCodeMappings.containsKey(roleInSchool) ? schoolRoleCodeMappings.get(roleInSchool) : "-1";
+			} else {
+				codeInSchool = "";
+			}
+			
 			final String structuredRoleWithParentOid = school.getParentOid() + ";" + school.getId() + ";" + group + ";"
-					+ roleInSchool;
+					+ roleInSchool+ ";" + codeInSchool + ";" + schoolOid + ";"+ officeOid;
 			log.debug("Populating structuredRoleWithParentOid: {}", structuredRoleWithParentOid);
 			
-			if (structuredRoleWithParentOid.split(DEFAULT_ATTR_VALUE_SEPARATOR, -1).length == 4) {
+			if (structuredRoleWithParentOid.split(DEFAULT_ATTR_VALUE_SEPARATOR, -1).length == 7) {
 				populateAttribute(attributes, ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID, structuredRoleWithParentOid);
 			} else {
 				log.debug("structuredRoleWithParentOid has too many components. Value {}", structuredRoleWithParentOid);
@@ -1176,10 +1262,15 @@ public class RestDataConnector extends AbstractDataConnector {
 		final Logger log = LoggerFactory.getLogger(RestDataConnector.class);
 
 		String trimmedSchoolId = StringSupport.trimOrNull(schoolId);
+		if(trimmedSchoolId!=null&&trimmedSchoolId.contains(".")) {
+			trimmedSchoolId.replaceAll(".", "%2E");
+		}
+		
 		log.debug("TrimmedSchool: {}", trimmedSchoolId);
 		
 		if (trimmedSchoolId == null || 
-				!StringUtils.isNumeric(trimmedSchoolId) || trimmedSchoolId.length() > 6) {
+				(StringUtils.isNumeric(trimmedSchoolId) && trimmedSchoolId.length() > 6) ||
+				(!StringUtils.isNumeric(trimmedSchoolId) && !trimmedSchoolId.contains("."))) {
 			return null;
 		}
 		final HttpResponse response;
@@ -1214,8 +1305,10 @@ public class RestDataConnector extends AbstractDataConnector {
 			final OpintopolkuOppilaitosDTO[] oResponse = gson.fromJson(output, OpintopolkuOppilaitosDTO[].class);
 			if (oResponse.length == 1 && oResponse[0].getMetadata() != null && oResponse[0].getMetadata().length > 0) {
 				log.debug("Successfully fetched information for id {}", trimmedSchoolId);
+				log.debug("Fetched data {}",oResponse[0]);
 				School school = new School();
-				school.setId(trimmedSchoolId);
+				school.setId(oResponse[0].getCodeValue());
+				school.setOid(oResponse[0].getOid());
 				for (OpintopolkuOppilaitosMetadataDTO metadata : oResponse[0].getMetadata()) {
 					if ("FI".equals(metadata.getLanguage())) {
 						school.setName(metadata.getName());
@@ -1228,6 +1321,7 @@ public class RestDataConnector extends AbstractDataConnector {
 
 				school.setParentOid(oResponse[0].getParentOid());
 				school.setParentName(oResponse[0].getParentName());
+				school.setOrganizationType(oResponse[0].getOrganizationType());
 
 				return school;
 			}
@@ -1237,5 +1331,149 @@ public class RestDataConnector extends AbstractDataConnector {
 		}
 		log.warn("Could not find name for id {}", schoolId);
 		return null;
+	}
+
+	public static String getAttrIdUsername() {
+		return ATTR_ID_USERNAME;
+	}
+
+	public static String getAttrIdFirstname() {
+		return ATTR_ID_FIRSTNAME;
+	}
+
+	public static String getAttrIdNickname() {
+		return ATTR_ID_NICKNAME;
+	}
+
+	public static String getAttrIdSurname() {
+		return ATTR_ID_SURNAME;
+	}
+
+	public static String getAttrIdRoles() {
+		return ATTR_ID_ROLES;
+	}
+
+	public static String getAttrIdMunicipalities() {
+		return ATTR_ID_MUNICIPALITIES;
+	}
+
+	public static String getAttrIdClasses() {
+		return ATTR_ID_CLASSES;
+	}
+
+	public static String getAttrIdGroups() {
+		return ATTR_ID_GROUPS;
+	}
+
+	public static String getAttrIdGroupLevels() {
+		return ATTR_ID_GROUP_LEVELS;
+	}
+
+	public static String getAttrIdGrade() {
+		return ATTR_ID_GRADE;
+	}
+
+	public static String getAttrIdLearningmaterialscharges() {
+		return ATTR_ID_LEARNINGMATERIALSCHARGES;
+	}
+
+	public static String getAttrIdSchools() {
+		return ATTR_ID_SCHOOLS;
+	}
+
+	public static String getAttrIdSchoolCodes() {
+		return ATTR_ID_SCHOOL_CODES;
+	}
+
+	public static String getAttrIdSchoolIds() {
+		return ATTR_ID_SCHOOL_IDS;
+	}
+
+	public static String getAttrIdSchoolOids() {
+		return ATTR_ID_SCHOOL_OIDS;
+	}
+
+	public static String getAttrIdSchoolInfos() {
+		return ATTR_ID_SCHOOL_INFOS;
+	}
+
+	public static String getAttrIdSchoolRoles() {
+		return ATTR_ID_SCHOOL_ROLES;
+	}
+
+	public static String getAttrIdStructuredRoles() {
+		return ATTR_ID_STRUCTURED_ROLES;
+	}
+
+	public static String getAttrIdStructuredRolesWid() {
+		return ATTR_ID_STRUCTURED_ROLES_WID;
+	}
+
+	public static String getAttrIdStructuredRolesWithParentOid() {
+		return ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID;
+	}
+
+	public static String getAttrPrefix() {
+		return ATTR_PREFIX;
+	}
+
+	public static String getAttrIdLearnerId() {
+		return ATTR_ID_LEARNER_ID;
+	}
+
+	public static String getAttrIdLegacyId() {
+		return ATTR_ID_LEGACY_ID;
+	}
+
+	public static String getAttrIdMunicipalityCode() {
+		return ATTR_ID_MUNICIPALITY_CODE;
+	}
+
+	public static String getAttrIdEducationProviderInfos() {
+		return ATTR_ID_EDUCATION_PROVIDER_INFOS;
+	}
+
+	public static String getAttrIdEducationProviderOid() {
+		return ATTR_ID_EDUCATION_PROVIDER_OID;
+	}
+
+	public static String getAttrIdEducationProviderName() {
+		return ATTR_ID_EDUCATION_PROVIDER_NAME;
+	}
+
+	public static String getDefaultBaseUrlSchoolInfo() {
+		return DEFAULT_BASE_URL_SCHOOL_INFO;
+	}
+
+	public static String getHeaderNameCallerId() {
+		return HEADER_NAME_CALLER_ID;
+	}
+
+	public static String getDefaultAttrValueSeparator() {
+		return DEFAULT_ATTR_VALUE_SEPARATOR;
+	}
+
+	public Logger getLog() {
+		return log;
+	}
+
+	public void setHttpClientBuilder(HttpClientBuilder httpClientBuilder) {
+		this.httpClientBuilder = httpClientBuilder;
+	}
+
+	public Set<String> getOfficeTypes() {
+		return officeTypes;
+	}
+
+	public void setOfficeTypes(Set<String> officeTypes) {
+		this.officeTypes = officeTypes;
+	}
+
+	public Map<String, Map<String, String>> getPrincipalMappings() {
+		return principalMappings;
+	}
+
+	public Map<String, Map<String, String>> getStaticValues() {
+		return staticValues;
 	}
 }

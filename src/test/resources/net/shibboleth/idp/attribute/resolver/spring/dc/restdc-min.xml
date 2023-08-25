@@ -15,6 +15,7 @@
     token="testingToken"
     nameApiBaseUrl="http://localhost:8997/mock_"
     allowedSchoolRoles="Opettaja,Oppilas,Rehtori,Sijaisopettaja,Koulusihteeri,Hallintohenkilö"
+    officeTypes="organisaatiotyyppi_03,organisaatiotyyppi_08"
     studentRoles="Oppilas">
     <eca:SchoolRoleMappings>
     	<eca:RoleMapping inputRole="teacher" outputRole="Opettaja"/>
@@ -22,6 +23,13 @@
     	<eca:RoleMapping inputRole="staff" outputRole="Hallintohenkilö"/>
     	<eca:RoleMapping inputRole="principal" outputRole="Rehtori"/>
     </eca:SchoolRoleMappings>
+    <eca:SchoolRoleCodeMappings>
+    	<eca:RoleCodeMapping inputRole="Opettaja" outputCode="2"/>
+    	<eca:RoleCodeMapping inputRole="Oppilas" outputCode="1"/>
+    	<eca:RoleCodeMapping inputRole="Rehtori" outputCode="3"/>
+        <eca:RoleCodeMapping inputRole="Hallintohenkilö" outputCode="4"/>
+        <eca:RoleCodeMapping inputRole="Sijaisopettaja" outputCode="5"/>
+    </eca:SchoolRoleCodeMappings>
     <eca:DirectIdpAttributes idpId="temp">
         <eca:Mapping attributeName="mockName" principalName="mockPrincipal"/>
     </eca:DirectIdpAttributes>

@@ -88,5 +88,13 @@ public class OpintopolkuOppilaitosMetadataDTO {
      */
     public String getLanguage() {
         return language;
-    }        
+    }
+
+    @Override
+    public String toString() {
+        return "OpintopolkuOppilaitosMetadataDTO [name=" + name + ", shortName=" + shortName + ", language=" + language
+                + "]";
+    }  
+    
+    
 }

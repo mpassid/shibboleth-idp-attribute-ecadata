@@ -51,7 +51,18 @@ THE SOFTWARE.
                             </sequence>
                         </complexType>
                 	</element>
-                	
+                	<element name="SchoolRoleCodeMappings" minOccurs="0" maxOccurs="1">
+                        <complexType>
+                            <sequence>
+                                <element name="RoleCodeMapping" maxOccurs="unbounded">
+                                    <complexType>
+                                    <attribute name="inputRole" type="string" use="required" />
+                                    <attribute name="outputCode" type="string" use="required" />
+                                    </complexType>
+                                </element>
+                            </sequence>
+                        </complexType>
+                	</element>
                     <element name="DirectIdpAttributes" minOccurs="0" maxOccurs="unbounded">
                         <complexType>
                             <sequence>
@@ -136,6 +147,13 @@ THE SOFTWARE.
                     <annotation>
                         <documentation>
                              The allowed school roles. Delimeter for multiple roles is | character.
+                        </documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="officeTypes" type="string" use="optional">
+                    <annotation>
+                        <documentation>
+                             The allowed office types. Delimeter for multiple types is | character.
                         </documentation>
                     </annotation>
                 </attribute>

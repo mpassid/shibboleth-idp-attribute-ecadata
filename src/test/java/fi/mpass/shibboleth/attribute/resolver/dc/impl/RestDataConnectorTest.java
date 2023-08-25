@@ -119,9 +119,21 @@ public class RestDataConnectorTest {
 	private String expectedSchoolId;
 	private String expectedSchoolId2;
 
+	/** The expected school oids values. */
+	private String expectedSchoolOid;
+	private String expectedSchoolOid2;
+
 	/** The expected school names values. */
 	private String expectedSchoolName;
 	private String expectedSchoolName2;
+
+	/** The expected office oid value. */
+	private String expectedOfficeOid;
+	private String expectedOfficeOid2;
+
+	/** The expected office name value. */
+	private String expectedOfficeName;
+	private String expectedOfficeName2;
 
 	/** The expected school info values. */
 	private String expectedSchoolInfo;
@@ -137,6 +149,7 @@ public class RestDataConnectorTest {
 	/** The expected parent info values. */
 	private String expectedParentInfo;
 	
+	private String expectedOrganizationType;
 
 	/**
 	 * Initialize unit tests.
@@ -153,14 +166,21 @@ public class RestDataConnectorTest {
 		expectedParentOid2 = "1.2.246.562.10.10000000002";
 		expectedParentName = "Mock Education Provider Name";
 		expectedParentName2 = "Mock Education Provider Name 2";
+		expectedOfficeOid = "1.2.246.562.10.30000000001";
+		expectedOfficeName = "Mock Office Name";
+		expectedOfficeOid2 = "1.2.246.562.10.30000000002";
+		expectedOfficeName2 = "Mock Office Name2";
 		expectedParentInfo = expectedParentOid + ";" + expectedParentName;
 		expectedResultAttribute = "username";
 		expectedSchoolId = "12345";
+		expectedSchoolOid = "1.2.246.562.10.12345";
 		expectedSchoolId2 = "23456";
+		expectedSchoolOid2 = "1.2.246.562.10.23456";
 		expectedSchoolName = "Mock School Name";
 		expectedSchoolName2 = "Mock School Name 2";
 		expectedSchoolInfo = expectedSchoolId + ";" + expectedSchoolName;
 		expectedToken = "testingToken";
+		expectedOrganizationType = "organisaatiotyyppi_02";
 	}
 
 	/**
@@ -231,7 +251,7 @@ public class RestDataConnectorTest {
 		final RestDataConnector dataConnector = new RestDataConnector();
 		dataConnector.setResultAttributePrefix("");
 
-		final String expected = expectedParentOid + ";" + expectedSchoolId + ";;";
+		final String expected = expectedParentOid + ";" + expectedSchoolId + ";;;;;";
 
 		School school = new School(expectedSchoolId, expectedSchoolName, expectedParentOid, expectedParentName);
 		dataConnector.populateStructuredRole(attributes, school, role);
@@ -240,6 +260,26 @@ public class RestDataConnectorTest {
 		Assert.assertNotNull(attribute);
 		Assert.assertEquals(attribute.getValues().size(), 1);
 		Assert.assertEquals(attribute.getValues().get(0).getNativeValue(), expected);
+	}
+
+	@Test
+	public void testPopulateStructuredRole_whenSchoolWithOfficeObjectAsParam_shouldReturnRoleWithParentOid() {
+		final UserDTO user = new UserDTO();
+		final RolesDTO role = user.new RolesDTO();
+		final Map<String, IdPAttribute> attributes = new HashMap<>();
+		final RestDataConnector dataConnector = new RestDataConnector();
+		dataConnector.setResultAttributePrefix("");
+
+		final String expected = expectedParentOid + ";" + expectedSchoolId + ";;;;"+expectedSchoolOid+";"+expectedOfficeOid;
+
+		School school = new School(expectedSchoolId, expectedSchoolName, expectedSchoolOid, expectedOfficeOid,expectedOfficeName , expectedParentOid, expectedParentName, expectedOrganizationType);
+		dataConnector.populateStructuredRole(attributes, school, role);
+		final IdPAttribute attribute = attributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID);
+		
+		Assert.assertNotNull(attribute);
+		Assert.assertEquals(attribute.getValues().size(), 1);
+		Assert.assertEquals(attribute.getValues().get(0).getNativeValue(), expected);
+
 	}
 
 	/**
@@ -589,7 +629,7 @@ public class RestDataConnectorTest {
 			throws ComponentInitializationException, ResolutionException, Exception {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-1role-1attr.json",
 				"restdc-min.xml");
-		Assert.assertEquals(resolvedAttributes.size(), 16);
+		Assert.assertEquals(resolvedAttributes.size(), 17);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
 				expectedOid);
 		Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
@@ -609,7 +649,7 @@ public class RestDataConnectorTest {
 			throws ComponentInitializationException, ResolutionException, Exception {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-1role-1attr2.json",
 				"restdc-min.xml");
-		Assert.assertEquals(resolvedAttributes.size(), 15);
+		Assert.assertEquals(resolvedAttributes.size(), 16);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
 				expectedOid);
 		Assert.assertNull(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID));
@@ -651,7 +691,7 @@ public class RestDataConnectorTest {
 			throws ComponentInitializationException, ResolutionException, Exception {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-1attr.json",
 				"restdc-min.xml");
-		Assert.assertEquals(resolvedAttributes.size(), 18);
+		Assert.assertEquals(resolvedAttributes.size(), 19);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
 				expectedOid);
 
@@ -668,7 +708,7 @@ public class RestDataConnectorTest {
 
 		final List<IdPAttributeValue> schoolInfos = resolvedAttributes.get(RestDataConnector.ATTR_ID_SCHOOL_INFOS)
 				.getValues();
-		Assert.assertEquals(schoolIds.size(), 1);
+		Assert.assertEquals(schoolInfos.size(), 2);
 		Assert.assertTrue(verifyAttributeValueExists(schoolInfos, expectedSchoolInfo));
 
 		final List<IdPAttributeValue> educationProviderOids = resolvedAttributes
@@ -688,7 +728,7 @@ public class RestDataConnectorTest {
 		
 		final List<IdPAttributeValue> learningMaterialCharge = resolvedAttributes
 				.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues();
-		Assert.assertEquals(educationProviderNames.size(), 1);
+		Assert.assertEquals(learningMaterialCharge.size(), 2);
 		Assert.assertTrue(verifyAttributeValueExists(learningMaterialCharge, "1;12345"));
 	}
 	
@@ -699,7 +739,7 @@ public class RestDataConnectorTest {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-MultipleRoleAttributes.json",
 				"restdc-min.xml");
 		//Assert.assertEquals(resolvedAttributes, "foo");
-		Assert.assertEquals(resolvedAttributes.size(), 21);
+		Assert.assertEquals(resolvedAttributes.size(), 22);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
 				expectedOid);
 
@@ -715,9 +755,9 @@ public class RestDataConnectorTest {
 		Assert.assertTrue(verifyAttributeValueExists(schoolIds, expectedSchoolId));
 
 		final List<IdPAttributeValue> schoolInfos = resolvedAttributes.get(RestDataConnector.ATTR_ID_SCHOOL_INFOS)
-				.getValues();
-		Assert.assertEquals(schoolInfos.size(), 2);
-		//Assert.assertTrue(verifyAttributeValueExists(schoolInfos, expectedSchoolInfo));
+				.getValues();		
+		Assert.assertEquals(schoolInfos.size(), 4);
+		Assert.assertTrue(verifyAttributeValueExists(schoolInfos, expectedSchoolInfo));
 
 		final List<IdPAttributeValue> educationProviderOids = resolvedAttributes
 				.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_OID).getValues();
@@ -747,7 +787,7 @@ public class RestDataConnectorTest {
 			throws ComponentInitializationException, ResolutionException, Exception {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes(
 				"student-1role-1attr-invalidGroupLevel.json", "restdc-min.xml");
-		Assert.assertEquals(resolvedAttributes.size(), 16);
+		Assert.assertEquals(resolvedAttributes.size(), 17);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
 				expectedOid);
 		Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
@@ -796,7 +836,7 @@ public class RestDataConnectorTest {
 			throws ComponentInitializationException, ResolutionException, Exception {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("teacher-2role-2attr.json",
 				"restdc-min.xml");
-		Assert.assertEquals(resolvedAttributes.size(), 17);
+		Assert.assertEquals(resolvedAttributes.size(), 18);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
 				expectedOid);
 		Assert.assertNull(resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS));
@@ -816,7 +856,7 @@ public class RestDataConnectorTest {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-2role-2attr.json",
 				"restdc-min.xml");
 		//Assert.assertEquals(resolvedAttributes, "foo");
-		Assert.assertEquals(resolvedAttributes.size(), 19);
+		Assert.assertEquals(resolvedAttributes.size(), 20);
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
 				expectedOid);
 
@@ -837,7 +877,7 @@ public class RestDataConnectorTest {
 		
 		final List<IdPAttributeValue> learningMaterialCharge = resolvedAttributes
 				.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues();
-		Assert.assertEquals(educationProviderNames.size(), 2);
+		Assert.assertEquals(learningMaterialCharge.size(), 4);
 		Assert.assertTrue(verifyAttributeValueExists(learningMaterialCharge, "0;12345"));
 		Assert.assertTrue(verifyAttributeValueExists(learningMaterialCharge, "1;23456"));
 	}
@@ -855,7 +895,7 @@ public class RestDataConnectorTest {
 		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-2role-2attr_new.json",
 				"restdc-min.xml");
 		//Assert.assertEquals(resolvedAttributes, "foo");
-		Assert.assertEquals(resolvedAttributes.size(), 20);
+		Assert.assertEquals(resolvedAttributes.size(), 21);		
 		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),expectedOid);
 
 		final List<IdPAttributeValue> schoolIds = resolvedAttributes.get(RestDataConnector.ATTR_ID_SCHOOL_IDS)
@@ -933,9 +973,9 @@ public class RestDataConnectorTest {
 		Assert.assertEquals(structuredRoleWids.get(1).getNativeValue(), "Testilä;99905;4B;Sijaisopettaja");
 		Assert.assertEquals(structuredRoleWids.get(2).getNativeValue(), "Testilä;99906;6C;Sijaisopettaja");
 		Assert.assertEquals(structuredRolesWithParentOid.size(), 3);
-		Assert.assertEquals(structuredRolesWithParentOid.get(0).getNativeValue(), "1.2.246.562.10.45678901237;99904;;Opettaja");
-		Assert.assertEquals(structuredRolesWithParentOid.get(1).getNativeValue(), "1.2.246.562.10.45678901237;99905;4B;Sijaisopettaja");
-		Assert.assertEquals(structuredRolesWithParentOid.get(2).getNativeValue(), "1.2.246.562.10.78901234567;99906;6C;Sijaisopettaja");
+		Assert.assertEquals(structuredRolesWithParentOid.get(0).getNativeValue(), "1.2.246.562.10.45678901237;99904;;Opettaja;2;;");
+		Assert.assertEquals(structuredRolesWithParentOid.get(1).getNativeValue(), "1.2.246.562.10.45678901237;99905;4B;Sijaisopettaja;5;;");
+		Assert.assertEquals(structuredRolesWithParentOid.get(2).getNativeValue(), "1.2.246.562.10.78901234567;99906;6C;Sijaisopettaja;5;;");
 	}
 	
 	@Test
@@ -1004,7 +1044,7 @@ public class RestDataConnectorTest {
 		testUsers.add(new Pair<>("testiu_00071", new HashMap<>()));
 		testUsers.get(2).getSecond().put("expectedSize",20);
 		testUsers.get(2).getSecond().put(RestDataConnector.ATTR_ID_USERNAME, "MPASSOID.6dfaba3e247015501de9c129a1a70926e0fa8f7f");
-		testUsers.get(2).getSecond().put(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID, "1.2.246.562.10.45678901237;99904;;Opettaja");
+		testUsers.get(2).getSecond().put(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID, "1.2.246.562.10.45678901237;99904;;Opettaja;2;;");
 		testUsers.get(2).getSecond().put("roleSize", 3);
 
 		testUsers.add(new Pair<>("testiu_00060", new HashMap<>()));
@@ -1045,6 +1085,55 @@ public class RestDataConnectorTest {
 				}
 			});
 		}
+	}
+
+	@Test
+	public void testResolveAttributes_whenOfficeCodeAndwhenOneStudentRole_shouldReturnValidUserDTO()
+			throws ComponentInitializationException, ResolutionException, Exception {
+		final Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("student-1role-1attr-officeCode.json",
+				"restdc-min.xml");
+
+			
+		Assert.assertEquals(resolvedAttributes.size(), 20);
+		Assert.assertEquals(resolvedAttributes.get(expectedResultAttribute).getValues().get(0).getNativeValue(),
+				expectedOid);
+
+		final List<IdPAttributeValue> groupLevels = resolvedAttributes.get(RestDataConnector.ATTR_ID_GROUP_LEVELS)
+				.getValues();
+		Assert.assertTrue(verifyAttributeValueExists(groupLevels, "7"));
+		Assert.assertEquals(resolvedAttributes.get("attr_" + RestDataConnector.ATTR_ID_LEARNER_ID).getValues().get(0)
+				.getNativeValue(), expectedLearnerId);
+
+		final List<IdPAttributeValue> schoolOids = resolvedAttributes.get(RestDataConnector.ATTR_ID_SCHOOL_OIDS)
+				.getValues();
+		Assert.assertEquals(schoolOids.size(), 1);
+		
+		Assert.assertTrue(verifyAttributeValueExists(schoolOids, expectedSchoolOid));
+
+		final List<IdPAttributeValue> schoolInfos = resolvedAttributes.get(RestDataConnector.ATTR_ID_SCHOOL_INFOS)
+				.getValues();
+		Assert.assertEquals(schoolInfos.size(), 3);
+		Assert.assertTrue(verifyAttributeValueExists(schoolInfos, expectedSchoolInfo));
+
+		final List<IdPAttributeValue> educationProviderOids = resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_OID).getValues();
+		Assert.assertEquals(educationProviderOids.size(), 1);
+		Assert.assertTrue(verifyAttributeValueExists(educationProviderOids, expectedParentOid));
+
+		final List<IdPAttributeValue> educationProviderNames = resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_NAME).getValues();
+		Assert.assertEquals(educationProviderNames.size(), 1);
+		Assert.assertTrue(verifyAttributeValueExists(educationProviderNames, expectedParentName));
+
+		final List<IdPAttributeValue> educationProviderInfos = resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_EDUCATION_PROVIDER_INFOS).getValues();
+		Assert.assertEquals(educationProviderOids.size(), 1);
+		Assert.assertTrue(verifyAttributeValueExists(educationProviderInfos, expectedParentInfo));
+		
+		final List<IdPAttributeValue> learningMaterialCharge = resolvedAttributes
+				.get(RestDataConnector.ATTR_ID_LEARNINGMATERIALSCHARGES).getValues();
+		Assert.assertEquals(learningMaterialCharge.size(), 2);
+		Assert.assertTrue(verifyAttributeValueExists(learningMaterialCharge, "1;12345"));
 	}
 	
 	/**
@@ -1218,16 +1307,17 @@ public class RestDataConnectorTest {
 	 */
 	protected Map<String, IdPAttribute> resolveAttributes(String userJson, String connectorSettings) throws Exception {
 		
-		School mockSchool = new School(expectedSchoolId, expectedSchoolName, expectedParentOid, expectedParentName);
-		School mockSchool2 = new School(expectedSchoolId2, expectedSchoolName2, expectedParentOid2, expectedParentName2);
+		School mockSchool = new School(expectedSchoolId, expectedSchoolName, expectedSchoolOid,null,null,expectedParentOid, expectedParentName,"organisaatiotyyppi_02");
+		School mockSchool2 = new School(expectedSchoolId2, expectedSchoolName2, expectedSchoolOid2,null,null, expectedParentOid2, expectedParentName2,"organisaatiotyyppi_02");
 		
 		School mockSchool3 = new School("99900", "Demolan koulu", "1.2.246.562.10.12345678907", "Demolan kunta");
 		School mockSchool4 = new School("99901", "Demolan ala-asteu", "1.2.246.562.10.12345678907", "Demolan kunta");
 		School mockSchool5 = new School("99904", "Testilän koulu", "1.2.246.562.10.45678901237", "Testilän kunta");
 		School mockSchool6 = new School("99905", "Testilän ala-aste", "1.2.246.562.10.45678901237", "Testilän kunta");
 		School mockSchool7 = new School("99906", "Esimerkkilän peruskoulu", "1.2.246.562.10.78901234567", "Esimerkkilän kunta");
-		
-		return resolveAttributes(userJson, connectorSettings, mockSchool, mockSchool2, mockSchool3, mockSchool4, mockSchool5, mockSchool6, mockSchool7);
+		School office1 = new School(expectedOfficeOid, expectedOfficeName, expectedOfficeOid,null,null, expectedSchoolOid, expectedSchoolName, "organisaatiotyyppi_08");
+		School office2 = new School(expectedOfficeOid2, expectedOfficeName2, expectedOfficeOid2,null,null, expectedSchoolOid2, expectedSchoolName2, "organisaatiotyyppi_08");
+		return resolveAttributes(userJson, connectorSettings, mockSchool, mockSchool2, mockSchool3, mockSchool4, mockSchool5, mockSchool6, mockSchool7,office1,office2);
 	}
 	
 	/**
@@ -1253,7 +1343,13 @@ public class RestDataConnectorTest {
 
 		//School mockSchool = new School(expectedSchoolId, expectedSchoolName, expectedParentOid, expectedParentName);
 		for (final School mockSchool : mockSchools) {
-			Mockito.when(mockConnector.findSchool(eq(mockSchool.getId()), anyString())).thenReturn(mockSchool);			
+			if(mockSchool.getOid()!=null) {
+				Mockito.when(mockConnector.findSchool(eq(mockSchool.getOid()), anyString())).thenReturn(mockSchool);			
+			}
+			if(mockSchool.getId()!=null) {
+				Mockito.when(mockConnector.findSchool(eq(mockSchool.getId()), anyString())).thenReturn(mockSchool);			
+			}
+			
 		}
 
 		//School mockSchool2 = new School(expectedSchoolId2, expectedSchoolName2, expectedParentOid2,

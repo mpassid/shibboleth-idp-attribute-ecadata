@@ -55,9 +55,15 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
 
     /** Element name for SchoolRoleMappins. */
     public static final QName SCHOOL_ROLE_MAPPINGS_NAME = new QName(RestDataConnectorNamespaceHandler.NAMESPACE, "SchoolRoleMappings");
+
+    /** Element name for SchoolRoleCodeMappins. */
+    public static final QName SCHOOL_ROLE_CODE_MAPPINGS_NAME = new QName(RestDataConnectorNamespaceHandler.NAMESPACE, "SchoolRoleCodeMappings");
     
-    /** Element name for SchoolRoleMappins. */
+    /** Element name for RoleMappins. */
     public static final QName ROLE_MAPPING_NAME = new QName(RestDataConnectorNamespaceHandler.NAMESPACE, "RoleMapping");
+
+    /** Element name for RoleCodeMappins. */
+    public static final QName ROLE_CODE_MAPPING_NAME = new QName(RestDataConnectorNamespaceHandler.NAMESPACE, "RoleCodeMapping");
     
     /** {@inheritDoc} */
     protected Class<RestDataConnector> getNativeBeanClass() {
@@ -141,6 +147,22 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
         		roleMap.put(inputRole, outRole);
         	}
         	builder.addPropertyValue("schoolRoleMappings", roleMap);
+        }
+        final Element schoolRoleCodeMappings = ElementSupport.getFirstChildElement(element, SCHOOL_ROLE_CODE_MAPPINGS_NAME);
+        //final List<Element> schoolRoleMappings = ElementSupport.getChildElements(element, SCHOOL_ROLE_MAPPINGS_NAME);
+        if (schoolRoleCodeMappings != null) {
+        	final List<Element> roleCodeMappings = ElementSupport.getChildElements(schoolRoleCodeMappings, ROLE_CODE_MAPPING_NAME);
+        	final Map<String,String> roleMap = new HashMap<>();
+        	for (final Element mapping : roleCodeMappings) {
+        		final String inputRole = mapping.getAttributeNS(null, "inputRole");
+        		final String outRole = mapping.getAttributeNS(null, "outputCode");
+        		roleMap.put(inputRole, outRole);
+        	}
+        	builder.addPropertyValue("schoolRoleCodeMappings", roleMap);
+        }
+        String officeTypes = element.getAttributeNS(null, "officeTypes");
+        if (StringSupport.trimOrNull(officeTypes) != null) {
+        	builder.addPropertyValue("officeTypes", Arrays.asList(officeTypes.split(",")));
         }
     }
 }
