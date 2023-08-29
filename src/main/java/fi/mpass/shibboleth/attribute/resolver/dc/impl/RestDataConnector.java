@@ -28,10 +28,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -1262,10 +1260,6 @@ public class RestDataConnector extends AbstractDataConnector {
 		final Logger log = LoggerFactory.getLogger(RestDataConnector.class);
 
 		String trimmedSchoolId = StringSupport.trimOrNull(schoolId);
-		if(trimmedSchoolId!=null&&trimmedSchoolId.contains(".")) {
-			trimmedSchoolId.replaceAll(".", "%2E");
-		}
-		
 		log.debug("TrimmedSchool: {}", trimmedSchoolId);
 		
 		if (trimmedSchoolId == null || 

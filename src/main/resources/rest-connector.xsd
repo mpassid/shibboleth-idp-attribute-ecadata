@@ -39,18 +39,6 @@ THE SOFTWARE.
         <complexContent>
             <extension base="resolver:BaseDataConnectorType">
                 <sequence>
-                    <element name="SchoolRoleMappings" minOccurs="0" maxOccurs="1">
-                        <complexType>
-                            <sequence>
-                                <element name="RoleMapping" maxOccurs="unbounded">
-                                    <complexType>
-                                    <attribute name="inputRole" type="string" use="required" />
-                                    <attribute name="outputRole" type="string" use="required" />
-                                    </complexType>
-                                </element>
-                            </sequence>
-                        </complexType>
-                	</element>
                 	<element name="SchoolRoleCodeMappings" minOccurs="0" maxOccurs="1">
                         <complexType>
                             <sequence>
@@ -58,6 +46,18 @@ THE SOFTWARE.
                                     <complexType>
                                     <attribute name="inputRole" type="string" use="required" />
                                     <attribute name="outputCode" type="string" use="required" />
+                                    </complexType>
+                                </element>
+                            </sequence>
+                        </complexType>
+                	</element>
+                    <element name="SchoolRoleMappings" minOccurs="0" maxOccurs="1">
+                        <complexType>
+                            <sequence>
+                                <element name="RoleMapping" maxOccurs="unbounded">
+                                    <complexType>
+                                    <attribute name="inputRole" type="string" use="required" />
+                                    <attribute name="outputRole" type="string" use="required" />
                                     </complexType>
                                 </element>
                             </sequence>
