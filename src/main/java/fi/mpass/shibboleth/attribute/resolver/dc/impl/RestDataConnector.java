@@ -954,8 +954,9 @@ public class RestDataConnector extends AbstractDataConnector {
 	 */
 	protected void populateStructuredRole(@Nonnull final Map<String, IdPAttribute> attributes,
 			@Nonnull final School school, @Nonnull final UserDTO.RolesDTO role) {
-		if (school.getId() != null && school.getParentOid() != null) {
+		if ((school.getId() != null || school.getOid() != null ) && school.getParentOid() != null) {
 			final String group = role.getGroup() != null ? role.getGroup() : "";
+			final String schoolId = school.getId() != null ? school.getId() : "";
 			final String schoolOid = school.getOid() != null ? school.getOid() : "";
 			final String officeOid = school.getOfficeOid() != null ? school.getOfficeOid() : "";
 
@@ -975,7 +976,7 @@ public class RestDataConnector extends AbstractDataConnector {
 				codeInSchool = "";
 			}
 			
-			final String structuredRoleWithParentOid = school.getParentOid() + ";" + school.getId() + ";" + group + ";"
+			final String structuredRoleWithParentOid = school.getParentOid() + ";" + schoolId + ";" + group + ";"
 					+ roleInSchool+ ";" + codeInSchool + ";" + schoolOid + ";"+ officeOid;
 			log.debug("Populating structuredRoleWithParentOid: {}", structuredRoleWithParentOid);
 			

@@ -31,7 +31,14 @@ public class School {
 		this.parentName = parentName;
 	}
 
-	
+	public School(String id, String name, String oid, String parentOid, String parentName) {
+		this.id = id;
+		this.oid = oid;
+		this.name = name;
+		this.parentOid = parentOid;
+		this.parentName = parentName;
+	}
+
 	public School(String id, String name, String oid, String officeOid, String officeName, String parentOid,
 			String parentName, String organizationType) {
 		this.id = id;

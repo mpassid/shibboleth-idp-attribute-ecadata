@@ -251,9 +251,9 @@ public class RestDataConnectorTest {
 		final RestDataConnector dataConnector = new RestDataConnector();
 		dataConnector.setResultAttributePrefix("");
 
-		final String expected = expectedParentOid + ";" + expectedSchoolId + ";;;;;";
+		final String expected = expectedParentOid + ";" + expectedSchoolId + ";;;;"+expectedSchoolOid+";";
 
-		School school = new School(expectedSchoolId, expectedSchoolName, expectedParentOid, expectedParentName);
+		School school = new School(expectedSchoolId, expectedSchoolName, expectedSchoolOid, expectedParentOid, expectedParentName);
 		dataConnector.populateStructuredRole(attributes, school, role);
 		final IdPAttribute attribute = attributes.get(RestDataConnector.ATTR_ID_STRUCTURED_ROLES_WITH_PARENT_OID);
 		

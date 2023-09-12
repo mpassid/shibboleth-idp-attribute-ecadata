@@ -313,7 +313,7 @@ public class UserDTO {
 	 * @param newNickName The value to be set.
 	 */
 	public void setNickName(String newNickName) {
-		this.firstName = newNickName;
+		this.nickName = newNickName;
 	}
 
 	/**
