@@ -54,6 +54,10 @@ public class UserDTO {
 	@SerializedName("last_name")
 	private String lastName;
 
+	/** The nickname of the user. */
+	@SerializedName("nickname")
+	private String nickName;
+
 	/** The array of roles for the user. */
 	private RolesDTO[] roles;
 
@@ -292,6 +296,24 @@ public class UserDTO {
 	 */
 	public void setFirstName(String newFirstName) {
 		this.firstName = newFirstName;
+	}
+
+	/**
+	 * Get nick name.
+	 * 
+	 * @return The value of nick_name.
+	 */
+	public String getNickName() {
+		return nickName;
+	}
+
+	/**
+	 * Set nick name.
+	 * 
+	 * @param newNickName The value to be set.
+	 */
+	public void setNickName(String newNickName) {
+		this.nickName = newNickName;
 	}
 
 	/**

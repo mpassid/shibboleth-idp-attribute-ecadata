@@ -17,11 +17,18 @@
     disregardTLSCertificate="true" 
     nameApiCallerId="testingCallerId"
     allowedSchoolRoles="Opettaja,Oppilas,Rehtori,Sijaisopettaja,Koulusihteeri,Hallintohenkilö"
+    officeTypes="organisaatiotyyppi_03,organisaatiotyyppi_08"
     studentRoles="Oppilas">
+    <eca:SchoolRoleCodeMappings>
+    	<eca:RoleCodeMapping inputRole="Opettaja" outputCode="2"/>
+    	<eca:RoleCodeMapping inputRole="Oppilas" outputCode="1"/>
+    	<eca:RoleCodeMapping inputRole="Hallintohenkilö" outputCode="3"/>
+    </eca:SchoolRoleCodeMappings>
     <eca:SchoolRoleMappings>
     	<eca:RoleMapping inputRole="teacher" outputRole="Opettaja"/>
     	<eca:RoleMapping inputRole="student" outputRole="Oppilas"/>
     	<eca:RoleMapping inputRole="staff" outputRole="Hallintohenkilö"/>
+        <eca:RoleMapping inputRole="principal" outputRole="Rehtori"/>
     </eca:SchoolRoleMappings>
     <eca:DirectIdpAttributes idpId="idpIdValue" municipalityCode="007" municipality="Helsinki">
         <eca:Mapping attributeName="username" principalName="uid"/>

@@ -10,9 +10,17 @@ public class School {
 	@SerializedName("nimi")
 	private String name;
 	
+	private String oid;
+
+	private String officeOid;
+
+	private String officeName;
+
 	private String parentOid;
 	
 	private String parentName;
+
+	private String organizationType;
 
 	public School() {};
 	
@@ -21,6 +29,26 @@ public class School {
 		this.name = name;
 		this.parentOid = parentOid;
 		this.parentName = parentName;
+	}
+
+	public School(String id, String name, String oid, String parentOid, String parentName) {
+		this.id = id;
+		this.oid = oid;
+		this.name = name;
+		this.parentOid = parentOid;
+		this.parentName = parentName;
+	}
+
+	public School(String id, String name, String oid, String officeOid, String officeName, String parentOid,
+			String parentName, String organizationType) {
+		this.id = id;
+		this.name = name;
+		this.oid = oid;
+		this.officeOid = officeOid;
+		this.officeName = officeName;
+		this.parentOid = parentOid;
+		this.parentName = parentName;
+		this.organizationType = organizationType;
 	}
 	
 	public String getId() {
@@ -47,4 +75,45 @@ public class School {
 	public void setParentName(String parentName) {
 		this.parentName = parentName;
 	}
+
+	public String getOid() {
+		return oid;
+	}
+
+	public void setOid(String oid) {
+		this.oid = oid;
+	}
+
+	public String getOfficeOid() {
+		return officeOid;
+	}
+
+	public void setOfficeOid(String officeOid) {
+		this.officeOid = officeOid;
+	}
+
+	public String getOfficeName() {
+		return officeName;
+	}
+
+	public void setOfficeName(String officeName) {
+		this.officeName = officeName;
+	}
+
+	public String getOrganizationType() {
+		return organizationType;
+	}
+
+	public void setOrganizationType(String organizationType) {
+		this.organizationType = organizationType;
+	}
+
+	@Override
+	public String toString() {
+		return "School [id=" + id + ", name=" + name + ", oid=" + oid + ", officeOid=" + officeOid + ", officeName="
+				+ officeName + ", parentOid=" + parentOid + ", parentName=" + parentName + ", organizationType="
+				+ organizationType + "]";
+	}
+
+	
 }

@@ -23,6 +23,8 @@
 
 package fi.mpass.shibboleth.attribute.resolver.data;
 
+import java.util.Arrays;
+
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -44,10 +46,14 @@ public class OpintopolkuOppilaitosDTO {
     /** The code value. */
     @SerializedName("koodiArvo")
     private String codeValue;
+
+    private String oid;
     
     private String parentOid;
 
 	private String parentName;
+
+    private String organizationType;
     
     /**
      * Set the code URI value.
@@ -128,4 +134,29 @@ public class OpintopolkuOppilaitosDTO {
 	public void setParentName(String parentName) {
 		this.parentName = parentName;
 	}
+
+    public String getOrganizationType() {
+        return organizationType;
+    }
+
+    public void setOrganizationType(String organizationType) {
+        this.organizationType = organizationType;
+    }
+
+    public String getOid() {
+        return oid;
+    }
+
+    public void setOid(String oid) {
+        this.oid = oid;
+    }
+
+    @Override
+    public String toString() {
+        return "OpintopolkuOppilaitosDTO [codeUri=" + codeUri + ", metadata=" + Arrays.toString(metadata) + ", version="
+                + version + ", codeValue=" + codeValue + ", oid=" + oid + ", parentOid=" + parentOid + ", parentName="
+                + parentName + ", organizationType=" + organizationType + "]";
+    }
+
+    
 }
