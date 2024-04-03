@@ -23,6 +23,7 @@
 
 package fi.mpass.shibboleth.attribute.resolver.dc.impl;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
@@ -43,12 +44,13 @@ import java.util.Set;
 import javax.security.auth.Subject;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.protocol.HttpContext;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.message.StatusLine;
+import org.apache.hc.core5.http.protocol.HttpContext;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.simpleframework.http.Request;
@@ -79,9 +81,9 @@ import net.shibboleth.idp.attribute.resolver.context.AttributeResolverWorkContex
 import net.shibboleth.idp.authn.AuthenticationResult;
 import net.shibboleth.idp.authn.context.AuthenticationContext;
 import net.shibboleth.idp.saml.impl.testing.TestSources;
-import net.shibboleth.utilities.java.support.collection.Pair;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import net.shibboleth.utilities.java.support.httpclient.HttpClientBuilder;
+import net.shibboleth.shared.collection.Pair;
+import net.shibboleth.shared.component.ComponentInitializationException;
+import net.shibboleth.shared.httpclient.HttpClientBuilder;
 
 /**
  * Unit tests for {@link RestDataConnector}.
@@ -1389,16 +1391,16 @@ public class RestDataConnectorTest {
 	 */
 	public HttpClientBuilder initializeMockBuilder(String userJson) throws Exception {
 		HttpClientBuilder mockBuilder = Mockito.mock(HttpClientBuilder.class);
-		CloseableHttpResponse mockResponse = Mockito.mock(CloseableHttpResponse.class);
-		StatusLine mockStatusLine = Mockito.mock(StatusLine.class);
-		Mockito.doReturn(200).when(mockStatusLine).getStatusCode();
-		Mockito.when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+		ClassicHttpResponse mockResponse = Mockito.mock(ClassicHttpResponse.class);
+		//StatusLine mockStatusLine = Mockito.mock(StatusLine.class);
+		//Mockito.doReturn(200).when(mockStatusLine).getStatusCode();
+		Mockito.when(mockResponse.getCode()).thenReturn(200);
 		HttpClient mockClient = Mockito.mock(HttpClient.class);
 		HttpEntity mockEntity = Mockito.mock(HttpEntity.class);
 		Mockito.when(mockResponse.getEntity()).thenReturn(mockEntity);
 		Mockito.when(mockEntity.getContent()).thenReturn(getUserObjectStream(userJson));
 		Mockito.when(
-				mockClient.execute(ArgumentMatchers.any(HttpUriRequest.class), ArgumentMatchers.any(HttpContext.class)))
+				mockClient.executeOpen(ArgumentMatchers.any(),ArgumentMatchers.any(ClassicHttpRequest.class), ArgumentMatchers.any(HttpContext.class)))
 				.thenReturn(mockResponse);
 		Mockito.when(mockBuilder.buildClient()).thenReturn(mockClient);
 		return mockBuilder;
@@ -1472,7 +1474,7 @@ public class RestDataConnectorTest {
 	public void testSchoolNameException() throws Exception {
 		HttpClientBuilder clientBuilder = Mockito.mock(HttpClientBuilder.class);
 		HttpClient mockClient = Mockito.mock(HttpClient.class);
-		Mockito.when(mockClient.execute((HttpUriRequest) Mockito.any())).thenThrow(new IOException("mock"));
+		Mockito.doThrow(new IOException("mock")).when(mockClient).executeOpen(Mockito.any(),Mockito.any(),Mockito.any());
 		Mockito.when(clientBuilder.buildClient()).thenReturn(mockClient);
 		final RestDataConnector connector = new RestDataConnector(clientBuilder);
 		School school = connector.findSchool("123456", "http://localhost/");

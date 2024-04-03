@@ -41,17 +41,16 @@ import javax.annotation.Nullable;
 import javax.security.auth.Subject;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.ParseException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,10 +76,10 @@ import net.shibboleth.idp.attribute.resolver.ResolvedAttributeDefinition;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolutionContext;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolverWorkContext;
 import net.shibboleth.idp.authn.context.AuthenticationContext;
-import net.shibboleth.utilities.java.support.annotation.constraint.NotEmpty;
-import net.shibboleth.utilities.java.support.httpclient.HttpClientBuilder;
-import net.shibboleth.utilities.java.support.logic.Constraint;
-import net.shibboleth.utilities.java.support.primitive.StringSupport;
+import net.shibboleth.shared.annotation.constraint.NotEmpty;
+import net.shibboleth.shared.httpclient.HttpClientBuilder;
+import net.shibboleth.shared.logic.Constraint;
+import net.shibboleth.shared.primitive.StringSupport;
 
 /**
  * This class implements a {@link DataConnector} (resolver plugin) that
@@ -745,23 +744,23 @@ public class RestDataConnector extends AbstractDataConnector {
 		}
 		log.debug("Calling URL {}", attributeCallUrl);
 		final HttpContext context = HttpClientContext.create();
-		final HttpUriRequest getMethod = RequestBuilder.get().setUri(attributeCallUrl)
+		final ClassicHttpRequest getMethod = ClassicRequestBuilder.get().setUri(attributeCallUrl)
 				.setHeader("Authorization", "Token " + token).build();
-		final HttpResponse restResponse;
+		final ClassicHttpResponse restResponse;
 		final long timestamp = System.currentTimeMillis();
 		try {
-			restResponse = httpClient.execute(getMethod, context);
+			restResponse = httpClient.executeOpen(null,getMethod, context);
 		} catch (Exception e) {
 			log.error("Could not open connection to REST API, skipping attribute resolution", e);
 			return null;
 		}
 
-		final int status = restResponse.getStatusLine().getStatusCode();
+		final int status = restResponse.getCode();
 		log.info("API call took {} ms, response code {}", System.currentTimeMillis() - timestamp, status);
 
 		if (log.isTraceEnabled()) {
-			if (restResponse.getAllHeaders() != null) {
-				for (Header header : restResponse.getAllHeaders()) {
+			if (restResponse.getHeaders() != null) {
+				for (Header header : restResponse.getHeaders()) {
 					log.trace("Header {}: {}", header.getName(), header.getValue());
 				}
 			}
@@ -822,7 +821,7 @@ public class RestDataConnector extends AbstractDataConnector {
 				
 				if (organization == null) {
 					log.debug("Didn't find any organization.");
-					if (StringUtils.isNumeric(rawSchool)) {
+					if (isNumeric(rawSchool)) {
 						populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);
 						populateStructuredRole(attributes, "", rawSchool, ecaUser.getRoles()[i]);
 					} else {
@@ -835,7 +834,7 @@ public class RestDataConnector extends AbstractDataConnector {
 						school = findSchool(organization.getParentOid(), nameApiBaseUrl);
 						if (school == null) {
 							log.debug("Didn't find any school.");
-							if (StringUtils.isNumeric(rawSchool)) {
+							if (isNumeric(rawSchool)) {
 								populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);
 								populateStructuredRole(attributes, "", rawSchool, ecaUser.getRoles()[i]);
 							} else {
@@ -1264,19 +1263,20 @@ public class RestDataConnector extends AbstractDataConnector {
 		log.debug("TrimmedSchool: {}", trimmedSchoolId);
 		
 		if (trimmedSchoolId == null || 
-				(StringUtils.isNumeric(trimmedSchoolId) && trimmedSchoolId.length() > 6) ||
-				(!StringUtils.isNumeric(trimmedSchoolId) && !trimmedSchoolId.contains("."))) {
+				(isNumeric(trimmedSchoolId) && trimmedSchoolId.length() > 6) ||
+				(!isNumeric(trimmedSchoolId) && !trimmedSchoolId.contains("."))) {
 			return null;
 		}
-		final HttpResponse response;
+		final HttpContext context = HttpClientContext.create();
+		final ClassicHttpResponse response;
 		try {
-			final HttpUriRequest get = RequestBuilder.get().setUri(baseUrl + trimmedSchoolId).build();
+			final ClassicHttpRequest get = ClassicRequestBuilder.get().setUri(baseUrl + trimmedSchoolId).build();
 
 			if (nameApiCallerId != null) {
 				get.setHeader(HEADER_NAME_CALLER_ID, nameApiCallerId);
 			}
 
-			response = buildClient().execute(get);
+			response = buildClient().executeOpen(null,get,context);
 		} catch (Exception e) {
 			log.error("Could not get school information with id {}", schoolId, e);
 			return null;
@@ -1470,5 +1470,14 @@ public class RestDataConnector extends AbstractDataConnector {
 
 	public Map<String, Map<String, String>> getStaticValues() {
 		return staticValues;
+	}
+
+	private boolean isNumeric(String value) {		
+		try {
+			Integer.parseInt(value);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}		
 	}
 }
