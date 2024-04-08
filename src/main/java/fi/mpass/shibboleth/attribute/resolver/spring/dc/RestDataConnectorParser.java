@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.xml.namespace.QName;
 
 import org.slf4j.Logger;
@@ -70,13 +72,20 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
     public static final QName ROLE_CODE_MAPPING_NAME = new QName(RestDataConnectorNamespaceHandler.NAMESPACE, "RoleCodeMapping");
     
     /** {@inheritDoc} */
-    protected Class<RestDataConnector> getNativeBeanClass() {
+    @Override
+    @Nullable protected Class<RestDataConnector> getBeanClass(@Nonnull final Element element) {
         return RestDataConnector.class;
     }
 
     /** {@inheritDoc} */
-    protected void doV2Parse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
+    // Checkstyle: CyclomaticComplexity OFF
+    @Override protected void doParse(@Nonnull final Element element, @Nonnull final ParserContext parserContext,
+            @Nonnull final BeanDefinitionBuilder builder) {
+
+        super.doParse(element, parserContext, builder);
+
         String endpointUrl = element.getAttributeNS(null, "endpointUrl");
+        
         builder.addPropertyValue("endpointUrl", endpointUrl);
         String hookAttribute = element.getAttributeNS(null, "hookAttribute");
         builder.addPropertyValue("hookAttribute", hookAttribute);
@@ -96,19 +105,19 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
         builder.addPropertyValue("nameApiBaseUrl", nameApiBaseUrl);
         String nameApiCallerId = element.getAttributeNS(null, "nameApiCallerId");
         if (StringSupport.trimOrNull(nameApiCallerId) != null) {
-        	builder.addPropertyValue("nameApiCallerId", nameApiCallerId);
+            builder.addPropertyValue("nameApiCallerId", nameApiCallerId);
         }
         String allowedSchoolRoles = element.getAttributeNS(null, "allowedSchoolRoles");
         if (StringSupport.trimOrNull(allowedSchoolRoles) != null) {
-        	builder.addPropertyValue("allowedSchoolRoles", Arrays.asList(allowedSchoolRoles.split(",")));
+            builder.addPropertyValue("allowedSchoolRoles", Arrays.asList(allowedSchoolRoles.split(",")));
         }
         String studentRoles = element.getAttributeNS(null, "studentRoles");
         if (StringSupport.trimOrNull(studentRoles) != null) {
-        	builder.addPropertyValue("studentRoles", Arrays.asList(studentRoles.split(",")));
+            builder.addPropertyValue("studentRoles", Arrays.asList(studentRoles.split(",")));
         }
         String officeTypes = element.getAttributeNS(null, "officeTypes");
         if (StringSupport.trimOrNull(officeTypes) != null) {
-        	builder.addPropertyValue("officeTypes", Arrays.asList(officeTypes.split(",")));
+            builder.addPropertyValue("officeTypes", Arrays.asList(officeTypes.split(",")));
         }
         final List<Element> directIdpAttributes = ElementSupport.getChildElements(element, DIRECT_IDP_ATTRIBUTES_NAME);
         if (directIdpAttributes != null) {
@@ -147,34 +156,31 @@ public class RestDataConnectorParser extends AbstractDataConnectorParser {
         final Element schoolRoleCodeMappings = ElementSupport.getFirstChildElement(element, SCHOOL_ROLE_CODE_MAPPINGS_NAME);
         final Map<String,String> roleCodeMap = new HashMap<>();
         if (schoolRoleCodeMappings != null) {
-        	final List<Element> roleCodeMappings = ElementSupport.getChildElements(schoolRoleCodeMappings, ROLE_CODE_MAPPING_NAME);
-        	
-        	for (final Element mapping : roleCodeMappings) {
-        		final String inputRole = mapping.getAttributeNS(null, "inputRole");
-        		final String outRole = mapping.getAttributeNS(null, "outputCode");
-        		roleCodeMap.put(inputRole, outRole);
-        	}
-        	builder.addPropertyValue("schoolRoleCodeMappings", roleCodeMap);
+            final List<Element> roleCodeMappings = ElementSupport.getChildElements(schoolRoleCodeMappings, ROLE_CODE_MAPPING_NAME);
+            
+            for (final Element mapping : roleCodeMappings) {
+                final String inputRole = mapping.getAttributeNS(null, "inputRole");
+                final String outRole = mapping.getAttributeNS(null, "outputCode");
+                roleCodeMap.put(inputRole, outRole);
+            }
+            builder.addPropertyValue("schoolRoleCodeMappings", roleCodeMap);
         }
         final Element schoolRoleMappings = ElementSupport.getFirstChildElement(element, SCHOOL_ROLE_MAPPINGS_NAME);
         //final List<Element> schoolRoleMappings = ElementSupport.getChildElements(element, SCHOOL_ROLE_MAPPINGS_NAME);
         if (schoolRoleMappings != null) {
-        	final List<Element> roleMappings = ElementSupport.getChildElements(schoolRoleMappings, ROLE_MAPPING_NAME);
-        	final Map<String,String> roleMap = new HashMap<>();
-        	for (final Element mapping : roleMappings) {
-        		final String inputRole = mapping.getAttributeNS(null, "inputRole");
-        		final String outRole = mapping.getAttributeNS(null, "outputRole");
+            final List<Element> roleMappings = ElementSupport.getChildElements(schoolRoleMappings, ROLE_MAPPING_NAME);
+            final Map<String,String> roleMap = new HashMap<>();
+            for (final Element mapping : roleMappings) {
+                final String inputRole = mapping.getAttributeNS(null, "inputRole");
+                final String outRole = mapping.getAttributeNS(null, "outputRole");
                 if(roleCodeMap.get(outRole)!=null){
                     roleMap.put(inputRole, outRole);
                 } else {
                     log.error("Missing school role code for {}",outRole);
                 }
-        		
-        	}
-        	builder.addPropertyValue("schoolRoleMappings", roleMap);
+                
+            }
+            builder.addPropertyValue("schoolRoleMappings", roleMap);
         }
-        
-
-        
     }
 }

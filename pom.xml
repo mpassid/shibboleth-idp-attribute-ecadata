@@ -154,7 +154,11 @@ THE SOFTWARE.
             <artifactId>commons-io</artifactId>
             <version>${commons-io.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <!-- Provided Dependencies -->
 
         <!-- Runtime Dependencies -->

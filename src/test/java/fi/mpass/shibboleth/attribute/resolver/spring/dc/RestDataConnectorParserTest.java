@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 
 import fi.mpass.shibboleth.attribute.resolver.dc.impl.RestDataConnector;
 import net.shibboleth.idp.attribute.resolver.spring.testing.BaseAttributeDefinitionParserTest;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
+import net.shibboleth.shared.component.ComponentInitializationException;
 
 /**
  * Unit tests for {@link RestDataConnectorParser}.
