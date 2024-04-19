@@ -27,7 +27,7 @@ import javax.annotation.Nonnull;
 
 import com.google.gson.annotations.SerializedName;
 
-import net.shibboleth.utilities.java.support.logic.Constraint;
+import net.shibboleth.shared.logic.Constraint;
 
 /**
  * This class defines the data transfer object for the communication with ECA

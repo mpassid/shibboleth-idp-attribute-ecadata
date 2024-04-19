@@ -40,8 +40,8 @@ import org.w3c.dom.Element;
 
 import fi.mpass.shibboleth.attribute.resolver.dc.impl.RestDataConnector;
 import net.shibboleth.idp.attribute.resolver.spring.dc.AbstractDataConnectorParser;
-import net.shibboleth.utilities.java.support.primitive.StringSupport;
-import net.shibboleth.utilities.java.support.xml.ElementSupport;
+import net.shibboleth.shared.primitive.StringSupport;
+import net.shibboleth.shared.xml.ElementSupport;
 
 /**
  * A configuration parser for ECA Auth Data API data connector.
