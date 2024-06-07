@@ -30,7 +30,7 @@ THE SOFTWARE.
     </parent>
     
     <groupId>fi.mpass</groupId>
-    <version>1.5-rc3</version>
+    <version>1.5-rc4</version>
     <packaging>jar</packaging>
     <artifactId>idp-attribute-impl-ecadata</artifactId>
 
@@ -44,8 +44,7 @@ THE SOFTWARE.
         <simpleframework.version>6.0.1</simpleframework.version>
         <checkstyle.configLocation>mpassid-checkstyle.xml</checkstyle.configLocation>
         <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
-        <automatic.module.name>fi.mpass.shibboleth.attribute.dc.rest</automatic.module.name>
-        <fi.csc.shibboleth.shibsp>1.0.0</fi.csc.shibboleth.shibsp>
+        <automatic.module.name>fi.mpass.shibboleth.attribute.dc.rest</automatic.module.name>        
     </properties>
 
     <repositories>
@@ -123,11 +122,7 @@ THE SOFTWARE.
             <artifactId>opensaml-soap-api</artifactId>
             <version>${opensaml.version}</version>
         </dependency>
-        <dependency>
-            <groupId>fi.csc.shibboleth</groupId>
-            <artifactId>idp-authn-api-shibsp</artifactId>
-            <version>${fi.csc.shibboleth.shibsp}</version>
-        </dependency>
+        
         
 
         <dependency>

@@ -58,7 +58,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
-import fi.csc.shibboleth.authn.principal.impl.KeyValuePrincipal;
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosMetadataDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.RolesTypeAdapter;
@@ -76,6 +75,7 @@ import net.shibboleth.idp.attribute.resolver.ResolvedAttributeDefinition;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolutionContext;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolverWorkContext;
 import net.shibboleth.idp.authn.context.AuthenticationContext;
+import net.shibboleth.idp.authn.principal.IdPAttributePrincipal;
 import net.shibboleth.shared.annotation.constraint.NotEmpty;
 import net.shibboleth.shared.httpclient.HttpClientBuilder;
 import net.shibboleth.shared.logic.Constraint;
@@ -423,7 +423,7 @@ public class RestDataConnector extends AbstractDataConnector {
 			final AuthenticationContext authnContext = attributeResolutionContext.getParent()
 					.getSubcontext(AuthenticationContext.class);
 			final Subject subject = authnContext.getAuthenticationResult().getSubject();
-			final Set<KeyValuePrincipal> principals = subject.getPrincipals(KeyValuePrincipal.class);
+			final Set<Principal> principals = subject.getPrincipals(Principal.class);
 
 			// Try to set municipality and municipality code from direct attributes configuration
 			if (staticValues.keySet().contains(idpIdValue)) {
@@ -444,79 +444,84 @@ public class RestDataConnector extends AbstractDataConnector {
 			}
 
 			for (final Entry<String, String> entry : attributeMappings.entrySet()) {
-				final Iterator<KeyValuePrincipal> iterator = principals.iterator();
+				final Iterator<Principal> iterator = principals.iterator();
 				while (iterator.hasNext()) {
-					final KeyValuePrincipal principal = iterator.next();
-					if (entry.getValue().equals(principal.getKey())) {
-						switch (entry.getKey()) {
-						case ATTR_ID_USERNAME:
-							final String mpassUsername = DigestUtils.sha1Hex(idpIdValue + principal.getValue());
-							ecaUser.setUsername("MPASSOID." + mpassUsername);
-							break;
-						case ATTR_ID_FIRSTNAME:
-							ecaUser.setFirstName(principal.getValue());
-							break;
-						case ATTR_ID_NICKNAME:
-							ecaUser.setNickName(principal.getValue());
-							break;	
-						case ATTR_ID_SURNAME:
-							ecaUser.setLastName(principal.getValue());
-							break;
-						case ATTR_ID_LEARNER_ID:
-							final AttributesDTO learnerId = ecaUser.new AttributesDTO();
-							learnerId.setName(ATTR_ID_LEARNER_ID);
-							learnerId.setValue(principal.getValue());
-							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learnerId));
-							break;
-						case ATTR_ID_LEGACY_ID:
-							final AttributesDTO legacyId = ecaUser.new AttributesDTO();
-							legacyId.setName(ATTR_ID_LEGACY_ID);
-							legacyId.setValue(principal.getValue());
-							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), legacyId));
-							break;
-						case ATTR_ID_MUNICIPALITY_CODE:
-							if (ecaUser.getAttribute(ATTR_ID_MUNICIPALITY_CODE) != null) {
-								final AttributesDTO municipalityCode = ecaUser.new AttributesDTO();
-								municipalityCode.setName(ATTR_ID_MUNICIPALITY_CODE);
-								municipalityCode.setValue(principal.getValue());
-								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), municipalityCode));
+					try {
+						final IdPAttributePrincipal principal = (IdPAttributePrincipal) iterator.next();
+						if (entry.getValue().equals(principal.getName())&&principal.getAttribute()!=null&&principal.getAttribute().getValues().size()>0) {
+							switch (entry.getKey()) {
+							case ATTR_ID_USERNAME:
+								final String mpassUsername = DigestUtils.sha1Hex(idpIdValue + principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								ecaUser.setUsername("MPASSOID." + mpassUsername);
+								break;
+							case ATTR_ID_FIRSTNAME:
+								ecaUser.setFirstName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								break;
+							case ATTR_ID_NICKNAME:
+								ecaUser.setNickName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								break;	
+							case ATTR_ID_SURNAME:
+								ecaUser.setLastName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								break;
+							case ATTR_ID_LEARNER_ID:
+								final AttributesDTO learnerId = ecaUser.new AttributesDTO();
+								learnerId.setName(ATTR_ID_LEARNER_ID);
+								learnerId.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learnerId));
+								break;
+							case ATTR_ID_LEGACY_ID:
+								final AttributesDTO legacyId = ecaUser.new AttributesDTO();
+								legacyId.setName(ATTR_ID_LEGACY_ID);
+								legacyId.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), legacyId));
+								break;
+							case ATTR_ID_MUNICIPALITY_CODE:
+								if (ecaUser.getAttribute(ATTR_ID_MUNICIPALITY_CODE) != null) {
+									final AttributesDTO municipalityCode = ecaUser.new AttributesDTO();
+									municipalityCode.setName(ATTR_ID_MUNICIPALITY_CODE);
+									municipalityCode.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+									ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), municipalityCode));
+								}
+								break;
+							case ATTR_ID_ROLES:
+								final AttributesDTO roles = ecaUser.new AttributesDTO();
+								roles.setName(ATTR_ID_SCHOOL_ROLES);
+								roles.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), roles));
+								break;
+							case ATTR_ID_GROUPS:
+								final AttributesDTO groups = ecaUser.new AttributesDTO();
+								groups.setName(ATTR_ID_CLASSES);
+								groups.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), groups));
+								break;
+							case ATTR_ID_GROUP_LEVELS:
+								final AttributesDTO groupLevel = ecaUser.new AttributesDTO();
+								groupLevel.setName(ATTR_ID_GRADE);
+								groupLevel.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), groupLevel));
+								break;
+							case ATTR_ID_SCHOOL_IDS:
+								final AttributesDTO schoolIds = ecaUser.new AttributesDTO();
+								schoolIds.setName(ATTR_ID_SCHOOL_CODES);
+								schoolIds.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), schoolIds));
+								break;
+							case ATTR_ID_LEARNINGMATERIALSCHARGES:
+								final AttributesDTO learningMaterialCharges = ecaUser.new AttributesDTO();
+								learningMaterialCharges.setName(ATTR_ID_LEARNINGMATERIALSCHARGES);
+								learningMaterialCharges.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learningMaterialCharges));
+								break;
+							default:
+								break;
 							}
 							break;
-						case ATTR_ID_ROLES:
-							final AttributesDTO roles = ecaUser.new AttributesDTO();
-							roles.setName(ATTR_ID_SCHOOL_ROLES);
-							roles.setValue(principal.getValue());
-							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), roles));
-							break;
-						case ATTR_ID_GROUPS:
-							final AttributesDTO groups = ecaUser.new AttributesDTO();
-							groups.setName(ATTR_ID_CLASSES);
-							groups.setValue(principal.getValue());
-							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), groups));
-							break;
-						case ATTR_ID_GROUP_LEVELS:
-							final AttributesDTO groupLevel = ecaUser.new AttributesDTO();
-							groupLevel.setName(ATTR_ID_GRADE);
-							groupLevel.setValue(principal.getValue());
-							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), groupLevel));
-							break;
-						case ATTR_ID_SCHOOL_IDS:
-							final AttributesDTO schoolIds = ecaUser.new AttributesDTO();
-							schoolIds.setName(ATTR_ID_SCHOOL_CODES);
-							schoolIds.setValue(principal.getValue());
-							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), schoolIds));
-							break;
-						case ATTR_ID_LEARNINGMATERIALSCHARGES:
-							final AttributesDTO learningMaterialCharges = ecaUser.new AttributesDTO();
-							learningMaterialCharges.setName(ATTR_ID_LEARNINGMATERIALSCHARGES);
-							learningMaterialCharges.setValue(principal.getValue());
-							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learningMaterialCharges));
-							break;
-						default:
-							break;
-						}
-						break;
+						}	
+					} catch (ClassCastException e) {
+						log.warn("Principal not IdPAttributePrincipal: {} ", e.getMessage());
 					}
+					
 				}
 			}
 		} else {

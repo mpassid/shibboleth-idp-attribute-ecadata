@@ -66,7 +66,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import fi.csc.shibboleth.authn.principal.impl.ShibAttributePrincipal;
 import fi.mpass.shibboleth.attribute.resolver.data.School;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.UserDTO.RolesDTO;
@@ -80,6 +79,7 @@ import net.shibboleth.idp.attribute.resolver.context.AttributeResolutionContext;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolverWorkContext;
 import net.shibboleth.idp.authn.AuthenticationResult;
 import net.shibboleth.idp.authn.context.AuthenticationContext;
+import net.shibboleth.idp.authn.principal.IdPAttributePrincipal;
 import net.shibboleth.idp.saml.impl.testing.TestSources;
 import net.shibboleth.shared.collection.Pair;
 import net.shibboleth.shared.component.ComponentInitializationException;
@@ -1202,12 +1202,12 @@ public class RestDataConnectorTest {
 	@Test
 	public void testPrincipals_whenUserHaveOneAttributeInAllRoleAttributes_shouldReturnValidUserDTO() throws Exception {
 		Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("restdc-full.xml",
-				new ShibAttributePrincipal("uid", "uidValue"), 
-				new ShibAttributePrincipal("schoolId", expectedSchoolId),
-				new ShibAttributePrincipal("groupLevel", "7"), 
-				new ShibAttributePrincipal("group", "7C"),
-				new ShibAttributePrincipal("role", "Oppilas"),
-				new ShibAttributePrincipal("learningMaterialsCharge", "1")
+				new IdPAttributePrincipal(populateAttribute("uid", "uidValue")), 
+				new IdPAttributePrincipal(populateAttribute("schoolId", expectedSchoolId)),
+				new IdPAttributePrincipal(populateAttribute("groupLevel", "7")), 
+				new IdPAttributePrincipal(populateAttribute("group", "7C")),
+				new IdPAttributePrincipal(populateAttribute("role", "Oppilas")),
+				new IdPAttributePrincipal(populateAttribute("learningMaterialsCharge", "1"))
 				);
 		//Assert.assertEquals(resolvedAttributes, "foo");
 		Assert.assertEquals(resolvedAttributes.keySet().size(), 15);
@@ -1223,12 +1223,12 @@ public class RestDataConnectorTest {
 	
 	@Test
 	public void testPrincipals_whenUserHaveOneAttributeInAllRoleAttributes_2_shouldReturnValidUserDTO() throws Exception {
-		Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("restdc-full.xml",
-				new ShibAttributePrincipal("uid", "uidValue"), 
-				new ShibAttributePrincipal("schoolId", "99900"),
-				new ShibAttributePrincipal("groupLevel", "7"), 
-				new ShibAttributePrincipal("group", "7C"),
-				new ShibAttributePrincipal("role", "Oppilas")
+					Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("restdc-full.xml",
+					new IdPAttributePrincipal(populateAttribute("uid", "uidValue")), 
+					new IdPAttributePrincipal(populateAttribute("schoolId", "99900")),
+					new IdPAttributePrincipal(populateAttribute("groupLevel", "7")), 
+					new IdPAttributePrincipal(populateAttribute("group", "7C")),
+					new IdPAttributePrincipal(populateAttribute("role", "Oppilas"))
 				);
 		//Assert.assertEquals(resolvedAttributes, "foo");
 		Assert.assertEquals(resolvedAttributes.keySet().size(), 14);
@@ -1244,12 +1244,12 @@ public class RestDataConnectorTest {
 	@Test
 	public void testPrincipals_whenUserHaveMultipleValueAttributeInAllRoleAttributes_shouldReturnValidUserDTO() throws Exception {
 		Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("restdc-full.xml",
-				new ShibAttributePrincipal("uid", "uidValue"), 
-				new ShibAttributePrincipal("schoolId", expectedSchoolId + ";" + expectedSchoolId2),
-				new ShibAttributePrincipal("groupLevel", "7"), 
-				new ShibAttributePrincipal("group", "7C;8A"),
-				new ShibAttributePrincipal("role", "Oppilas"),
-				new ShibAttributePrincipal("learningMaterialsCharge", "1")
+					new IdPAttributePrincipal(populateAttribute("uid", "uidValue")), 
+					new IdPAttributePrincipal(populateAttribute("schoolId", expectedSchoolId + ";" + expectedSchoolId2)),
+					new IdPAttributePrincipal(populateAttribute("groupLevel", "7")), 
+					new IdPAttributePrincipal(populateAttribute("group", "7C;8A")),
+					new IdPAttributePrincipal(populateAttribute("role", "Oppilas")),
+					new IdPAttributePrincipal(populateAttribute("learningMaterialsCharge", "1"))
 				);
 		//Assert.assertEquals(resolvedAttributes, "foo");
 		Assert.assertEquals(resolvedAttributes.keySet().size(), 15);
@@ -1266,11 +1266,11 @@ public class RestDataConnectorTest {
 	@Test
 	public void testPrincipals_whenUserHaveMultipleValueAttributeInAllRoleAttributesV2_shouldReturnValidUserDTO() throws Exception {
 		Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("restdc-full.xml",
-				new ShibAttributePrincipal("uid", "uidValue"), 
-				new ShibAttributePrincipal("schoolId", expectedSchoolId + ";" + expectedSchoolId2),
-				new ShibAttributePrincipal("groupLevel", "7"), 
-				new ShibAttributePrincipal("group", "7C;8A"),
-				new ShibAttributePrincipal("role", "Opettaja"));
+				new IdPAttributePrincipal(populateAttribute("uid", "uidValue")), 
+				new IdPAttributePrincipal(populateAttribute("schoolId", expectedSchoolId + ";" + expectedSchoolId2)),
+				new IdPAttributePrincipal(populateAttribute("groupLevel", "7")), 
+				new IdPAttributePrincipal(populateAttribute("group", "7C;8A")),
+				new IdPAttributePrincipal(populateAttribute("role", "Opettaja")));
 		//Assert.assertEquals(resolvedAttributes, "foo");
 		Assert.assertEquals(resolvedAttributes.keySet().size(), 14);
 		Assert.assertNotNull(resolvedAttributes.get("testingPrefixusername").getValues().get(0).getNativeValue());
@@ -1281,14 +1281,13 @@ public class RestDataConnectorTest {
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_MUNICIPALITY_CODE).getValues().get(0).getNativeValue(), "007");
 		Assert.assertEquals(resolvedAttributes.get("testingPrefix" + RestDataConnector.ATTR_PREFIX + RestDataConnector.ATTR_ID_MUNICIPALITIES).getValues().get(0).getNativeValue(), "Helsinki");
 	}
-	
 
 	@Test
 	public void testPrincipals() throws Exception {
 		Map<String, IdPAttribute> resolvedAttributes = resolveAttributes("restdc-full.xml",
-				new ShibAttributePrincipal("uid", "uidValue"),
-				new ShibAttributePrincipal("schoolId", expectedSchoolId),
-				new ShibAttributePrincipal("role", "Opettaja"));
+				new IdPAttributePrincipal(populateAttribute("uid", "uidValue")),
+				new IdPAttributePrincipal(populateAttribute("schoolId", expectedSchoolId)),
+				new IdPAttributePrincipal(populateAttribute("role", "Opettaja")));
 		//Assert.assertEquals(resolvedAttributes, "foo");
 		Assert.assertEquals(resolvedAttributes.keySet().size(), 10);
 		Assert.assertNotNull(resolvedAttributes.get("testingPrefixusername").getValues().get(0).getNativeValue());
