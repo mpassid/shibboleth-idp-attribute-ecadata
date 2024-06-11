@@ -30,7 +30,7 @@ THE SOFTWARE.
     </parent>
     
     <groupId>fi.mpass</groupId>
-    <version>1.5-rc4</version>
+    <version>1.5-rc5</version>
     <packaging>jar</packaging>
     <artifactId>idp-attribute-impl-ecadata</artifactId>
 
@@ -107,11 +107,6 @@ THE SOFTWARE.
             <version>${shib.idp.version}</version>
         </dependency>
 
-        <!--dependency>
-            <groupId>${opensaml.groupId}</groupId>
-            <artifactId>opensaml-core</artifactId>
-            <version>${opensaml.version}</version>
-        </dependency-->
         <dependency>
             <groupId>${opensaml.groupId}</groupId>
             <artifactId>opensaml-profile-api</artifactId>

@@ -370,7 +370,7 @@ public class RestDataConnector extends AbstractDataConnector {
 		final UserDTO ecaUser;
 		if (principalMappings.keySet().contains(idpIdValue)) {
 			log.debug("The direct attribute mapping settings found for IdP {}", idpIdValue);
-			ecaUser = getUserDetailsFromAttributes(idpIdValue, attributeResolutionContext);
+			ecaUser = getUserDetailsFromIdpAttributes(idpIdValue, attributeResolutionContext);
 		} else {
 			log.debug("The direct attribute mapping settings were not found for IdP {}", idpIdValue);
 			ecaUser = getUserDetailsViaRest(idpIdValue, attributeResolverWorkContext);
@@ -411,7 +411,7 @@ public class RestDataConnector extends AbstractDataConnector {
 		return attributes;
 	}
 
-	protected UserDTO getUserDetailsFromAttributes(final String idpIdValue,
+	protected UserDTO getUserDetailsFromIdpAttributes(final String idpIdValue,
 			@Nonnull final AttributeResolutionContext attributeResolutionContext) {
 		
 		final UserDTO ecaUser = new UserDTO();
@@ -423,7 +423,7 @@ public class RestDataConnector extends AbstractDataConnector {
 			final AuthenticationContext authnContext = attributeResolutionContext.getParent()
 					.getSubcontext(AuthenticationContext.class);
 			final Subject subject = authnContext.getAuthenticationResult().getSubject();
-			final Set<Principal> principals = subject.getPrincipals(Principal.class);
+			final Set<IdPAttributePrincipal> principals = subject.getPrincipals(IdPAttributePrincipal.class);
 
 			// Try to set municipality and municipality code from direct attributes configuration
 			if (staticValues.keySet().contains(idpIdValue)) {
@@ -444,84 +444,79 @@ public class RestDataConnector extends AbstractDataConnector {
 			}
 
 			for (final Entry<String, String> entry : attributeMappings.entrySet()) {
-				final Iterator<Principal> iterator = principals.iterator();
-				while (iterator.hasNext()) {
-					try {
-						final IdPAttributePrincipal principal = (IdPAttributePrincipal) iterator.next();
-						if (entry.getValue().equals(principal.getName())&&principal.getAttribute()!=null&&principal.getAttribute().getValues().size()>0) {
-							switch (entry.getKey()) {
-							case ATTR_ID_USERNAME:
-								final String mpassUsername = DigestUtils.sha1Hex(idpIdValue + principal.getAttribute().getValues().get(0).getNativeValue().toString());
-								ecaUser.setUsername("MPASSOID." + mpassUsername);
-								break;
-							case ATTR_ID_FIRSTNAME:
-								ecaUser.setFirstName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
-								break;
-							case ATTR_ID_NICKNAME:
-								ecaUser.setNickName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
-								break;	
-							case ATTR_ID_SURNAME:
-								ecaUser.setLastName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
-								break;
-							case ATTR_ID_LEARNER_ID:
-								final AttributesDTO learnerId = ecaUser.new AttributesDTO();
-								learnerId.setName(ATTR_ID_LEARNER_ID);
-								learnerId.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
-								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learnerId));
-								break;
-							case ATTR_ID_LEGACY_ID:
-								final AttributesDTO legacyId = ecaUser.new AttributesDTO();
-								legacyId.setName(ATTR_ID_LEGACY_ID);
-								legacyId.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
-								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), legacyId));
-								break;
-							case ATTR_ID_MUNICIPALITY_CODE:
-								if (ecaUser.getAttribute(ATTR_ID_MUNICIPALITY_CODE) != null) {
-									final AttributesDTO municipalityCode = ecaUser.new AttributesDTO();
-									municipalityCode.setName(ATTR_ID_MUNICIPALITY_CODE);
-									municipalityCode.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
-									ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), municipalityCode));
-								}
-								break;
-							case ATTR_ID_ROLES:
-								final AttributesDTO roles = ecaUser.new AttributesDTO();
-								roles.setName(ATTR_ID_SCHOOL_ROLES);
-								roles.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
-								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), roles));
-								break;
-							case ATTR_ID_GROUPS:
-								final AttributesDTO groups = ecaUser.new AttributesDTO();
-								groups.setName(ATTR_ID_CLASSES);
-								groups.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
-								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), groups));
-								break;
-							case ATTR_ID_GROUP_LEVELS:
-								final AttributesDTO groupLevel = ecaUser.new AttributesDTO();
-								groupLevel.setName(ATTR_ID_GRADE);
-								groupLevel.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
-								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), groupLevel));
-								break;
-							case ATTR_ID_SCHOOL_IDS:
-								final AttributesDTO schoolIds = ecaUser.new AttributesDTO();
-								schoolIds.setName(ATTR_ID_SCHOOL_CODES);
-								schoolIds.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
-								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), schoolIds));
-								break;
-							case ATTR_ID_LEARNINGMATERIALSCHARGES:
-								final AttributesDTO learningMaterialCharges = ecaUser.new AttributesDTO();
-								learningMaterialCharges.setName(ATTR_ID_LEARNINGMATERIALSCHARGES);
-								learningMaterialCharges.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
-								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learningMaterialCharges));
-								break;
-							default:
-								break;
+				final Iterator<IdPAttributePrincipal> iterator = principals.iterator();
+				while (iterator.hasNext()) {					
+					final IdPAttributePrincipal principal = iterator.next();
+					if (entry.getValue().equals(principal.getName())&&principal.getAttribute()!=null&&principal.getAttribute().getValues().size()>0) {
+						switch (entry.getKey()) {
+						case ATTR_ID_USERNAME:
+							final String mpassUsername = DigestUtils.sha1Hex(idpIdValue + principal.getAttribute().getValues().get(0).getNativeValue().toString());
+							ecaUser.setUsername("MPASSOID." + mpassUsername);
+							break;
+						case ATTR_ID_FIRSTNAME:
+							ecaUser.setFirstName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+							break;
+						case ATTR_ID_NICKNAME:
+							ecaUser.setNickName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+							break;	
+						case ATTR_ID_SURNAME:
+							ecaUser.setLastName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+							break;
+						case ATTR_ID_LEARNER_ID:
+							final AttributesDTO learnerId = ecaUser.new AttributesDTO();
+							learnerId.setName(ATTR_ID_LEARNER_ID);
+							learnerId.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learnerId));
+							break;
+						case ATTR_ID_LEGACY_ID:
+							final AttributesDTO legacyId = ecaUser.new AttributesDTO();
+							legacyId.setName(ATTR_ID_LEGACY_ID);
+							legacyId.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), legacyId));
+							break;
+						case ATTR_ID_MUNICIPALITY_CODE:
+							if (ecaUser.getAttribute(ATTR_ID_MUNICIPALITY_CODE) != null) {
+								final AttributesDTO municipalityCode = ecaUser.new AttributesDTO();
+								municipalityCode.setName(ATTR_ID_MUNICIPALITY_CODE);
+								municipalityCode.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), municipalityCode));
 							}
 							break;
-						}	
-					} catch (ClassCastException e) {
-						log.warn("Principal not IdPAttributePrincipal: {} ", e.getMessage());
-					}
-					
+						case ATTR_ID_ROLES:
+							final AttributesDTO roles = ecaUser.new AttributesDTO();
+							roles.setName(ATTR_ID_SCHOOL_ROLES);
+							roles.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), roles));
+							break;
+						case ATTR_ID_GROUPS:
+							final AttributesDTO groups = ecaUser.new AttributesDTO();
+							groups.setName(ATTR_ID_CLASSES);
+							groups.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), groups));
+							break;
+						case ATTR_ID_GROUP_LEVELS:
+							final AttributesDTO groupLevel = ecaUser.new AttributesDTO();
+							groupLevel.setName(ATTR_ID_GRADE);
+							groupLevel.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), groupLevel));
+							break;
+						case ATTR_ID_SCHOOL_IDS:
+							final AttributesDTO schoolIds = ecaUser.new AttributesDTO();
+							schoolIds.setName(ATTR_ID_SCHOOL_CODES);
+							schoolIds.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), schoolIds));
+							break;
+						case ATTR_ID_LEARNINGMATERIALSCHARGES:
+							final AttributesDTO learningMaterialCharges = ecaUser.new AttributesDTO();
+							learningMaterialCharges.setName(ATTR_ID_LEARNINGMATERIALSCHARGES);
+							learningMaterialCharges.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
+							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learningMaterialCharges));
+							break;
+						default:
+							break;
+						}
+						break;
+					}						
 				}
 			}
 		} else {
