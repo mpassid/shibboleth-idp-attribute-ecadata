@@ -41,17 +41,16 @@ import javax.annotation.Nullable;
 import javax.security.auth.Subject;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.ParseException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +58,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
-import fi.csc.shibboleth.authn.principal.impl.KeyValuePrincipal;
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.OpintopolkuOppilaitosMetadataDTO;
 import fi.mpass.shibboleth.attribute.resolver.data.RolesTypeAdapter;
@@ -77,10 +75,11 @@ import net.shibboleth.idp.attribute.resolver.ResolvedAttributeDefinition;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolutionContext;
 import net.shibboleth.idp.attribute.resolver.context.AttributeResolverWorkContext;
 import net.shibboleth.idp.authn.context.AuthenticationContext;
-import net.shibboleth.utilities.java.support.annotation.constraint.NotEmpty;
-import net.shibboleth.utilities.java.support.httpclient.HttpClientBuilder;
-import net.shibboleth.utilities.java.support.logic.Constraint;
-import net.shibboleth.utilities.java.support.primitive.StringSupport;
+import net.shibboleth.idp.authn.principal.IdPAttributePrincipal;
+import net.shibboleth.shared.annotation.constraint.NotEmpty;
+import net.shibboleth.shared.httpclient.HttpClientBuilder;
+import net.shibboleth.shared.logic.Constraint;
+import net.shibboleth.shared.primitive.StringSupport;
 
 /**
  * This class implements a {@link DataConnector} (resolver plugin) that
@@ -371,7 +370,7 @@ public class RestDataConnector extends AbstractDataConnector {
 		final UserDTO ecaUser;
 		if (principalMappings.keySet().contains(idpIdValue)) {
 			log.debug("The direct attribute mapping settings found for IdP {}", idpIdValue);
-			ecaUser = getUserDetailsFromAttributes(idpIdValue, attributeResolutionContext);
+			ecaUser = getUserDetailsFromIdpAttributes(idpIdValue, attributeResolutionContext);
 		} else {
 			log.debug("The direct attribute mapping settings were not found for IdP {}", idpIdValue);
 			ecaUser = getUserDetailsViaRest(idpIdValue, attributeResolverWorkContext);
@@ -412,7 +411,7 @@ public class RestDataConnector extends AbstractDataConnector {
 		return attributes;
 	}
 
-	protected UserDTO getUserDetailsFromAttributes(final String idpIdValue,
+	protected UserDTO getUserDetailsFromIdpAttributes(final String idpIdValue,
 			@Nonnull final AttributeResolutionContext attributeResolutionContext) {
 		
 		final UserDTO ecaUser = new UserDTO();
@@ -424,7 +423,7 @@ public class RestDataConnector extends AbstractDataConnector {
 			final AuthenticationContext authnContext = attributeResolutionContext.getParent()
 					.getSubcontext(AuthenticationContext.class);
 			final Subject subject = authnContext.getAuthenticationResult().getSubject();
-			final Set<KeyValuePrincipal> principals = subject.getPrincipals(KeyValuePrincipal.class);
+			final Set<IdPAttributePrincipal> principals = subject.getPrincipals(IdPAttributePrincipal.class);
 
 			// Try to set municipality and municipality code from direct attributes configuration
 			if (staticValues.keySet().contains(idpIdValue)) {
@@ -445,79 +444,79 @@ public class RestDataConnector extends AbstractDataConnector {
 			}
 
 			for (final Entry<String, String> entry : attributeMappings.entrySet()) {
-				final Iterator<KeyValuePrincipal> iterator = principals.iterator();
-				while (iterator.hasNext()) {
-					final KeyValuePrincipal principal = iterator.next();
-					if (entry.getValue().equals(principal.getKey())) {
+				final Iterator<IdPAttributePrincipal> iterator = principals.iterator();
+				while (iterator.hasNext()) {					
+					final IdPAttributePrincipal principal = iterator.next();
+					if (entry.getValue().equals(principal.getName())&&principal.getAttribute()!=null&&principal.getAttribute().getValues().size()>0) {
 						switch (entry.getKey()) {
 						case ATTR_ID_USERNAME:
-							final String mpassUsername = DigestUtils.sha1Hex(idpIdValue + principal.getValue());
+							final String mpassUsername = DigestUtils.sha1Hex(idpIdValue + principal.getAttribute().getValues().get(0).getNativeValue().toString());
 							ecaUser.setUsername("MPASSOID." + mpassUsername);
 							break;
 						case ATTR_ID_FIRSTNAME:
-							ecaUser.setFirstName(principal.getValue());
+							ecaUser.setFirstName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
 							break;
 						case ATTR_ID_NICKNAME:
-							ecaUser.setNickName(principal.getValue());
+							ecaUser.setNickName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
 							break;	
 						case ATTR_ID_SURNAME:
-							ecaUser.setLastName(principal.getValue());
+							ecaUser.setLastName(principal.getAttribute().getValues().get(0).getNativeValue().toString());
 							break;
 						case ATTR_ID_LEARNER_ID:
 							final AttributesDTO learnerId = ecaUser.new AttributesDTO();
 							learnerId.setName(ATTR_ID_LEARNER_ID);
-							learnerId.setValue(principal.getValue());
+							learnerId.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
 							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learnerId));
 							break;
 						case ATTR_ID_LEGACY_ID:
 							final AttributesDTO legacyId = ecaUser.new AttributesDTO();
 							legacyId.setName(ATTR_ID_LEGACY_ID);
-							legacyId.setValue(principal.getValue());
+							legacyId.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
 							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), legacyId));
 							break;
 						case ATTR_ID_MUNICIPALITY_CODE:
 							if (ecaUser.getAttribute(ATTR_ID_MUNICIPALITY_CODE) != null) {
 								final AttributesDTO municipalityCode = ecaUser.new AttributesDTO();
 								municipalityCode.setName(ATTR_ID_MUNICIPALITY_CODE);
-								municipalityCode.setValue(principal.getValue());
+								municipalityCode.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
 								ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), municipalityCode));
 							}
 							break;
 						case ATTR_ID_ROLES:
 							final AttributesDTO roles = ecaUser.new AttributesDTO();
 							roles.setName(ATTR_ID_SCHOOL_ROLES);
-							roles.setValue(principal.getValue());
+							roles.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
 							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), roles));
 							break;
 						case ATTR_ID_GROUPS:
 							final AttributesDTO groups = ecaUser.new AttributesDTO();
 							groups.setName(ATTR_ID_CLASSES);
-							groups.setValue(principal.getValue());
+							groups.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
 							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), groups));
 							break;
 						case ATTR_ID_GROUP_LEVELS:
 							final AttributesDTO groupLevel = ecaUser.new AttributesDTO();
 							groupLevel.setName(ATTR_ID_GRADE);
-							groupLevel.setValue(principal.getValue());
+							groupLevel.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
 							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), groupLevel));
 							break;
 						case ATTR_ID_SCHOOL_IDS:
 							final AttributesDTO schoolIds = ecaUser.new AttributesDTO();
 							schoolIds.setName(ATTR_ID_SCHOOL_CODES);
-							schoolIds.setValue(principal.getValue());
+							schoolIds.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
 							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), schoolIds));
 							break;
 						case ATTR_ID_LEARNINGMATERIALSCHARGES:
 							final AttributesDTO learningMaterialCharges = ecaUser.new AttributesDTO();
 							learningMaterialCharges.setName(ATTR_ID_LEARNINGMATERIALSCHARGES);
-							learningMaterialCharges.setValue(principal.getValue());
+							learningMaterialCharges.setValue(principal.getAttribute().getValues().get(0).getNativeValue().toString());
 							ecaUser.setAttributes(appendNewAttribute(ecaUser.getAttributes(), learningMaterialCharges));
 							break;
 						default:
 							break;
 						}
 						break;
-					}
+					}						
 				}
 			}
 		} else {
@@ -745,23 +744,23 @@ public class RestDataConnector extends AbstractDataConnector {
 		}
 		log.debug("Calling URL {}", attributeCallUrl);
 		final HttpContext context = HttpClientContext.create();
-		final HttpUriRequest getMethod = RequestBuilder.get().setUri(attributeCallUrl)
+		final ClassicHttpRequest getMethod = ClassicRequestBuilder.get().setUri(attributeCallUrl)
 				.setHeader("Authorization", "Token " + token).build();
-		final HttpResponse restResponse;
+		final ClassicHttpResponse restResponse;
 		final long timestamp = System.currentTimeMillis();
 		try {
-			restResponse = httpClient.execute(getMethod, context);
+			restResponse = httpClient.executeOpen(null,getMethod, context);
 		} catch (Exception e) {
 			log.error("Could not open connection to REST API, skipping attribute resolution", e);
 			return null;
 		}
 
-		final int status = restResponse.getStatusLine().getStatusCode();
+		final int status = restResponse.getCode();
 		log.info("API call took {} ms, response code {}", System.currentTimeMillis() - timestamp, status);
 
 		if (log.isTraceEnabled()) {
-			if (restResponse.getAllHeaders() != null) {
-				for (Header header : restResponse.getAllHeaders()) {
+			if (restResponse.getHeaders() != null) {
+				for (Header header : restResponse.getHeaders()) {
 					log.trace("Header {}: {}", header.getName(), header.getValue());
 				}
 			}
@@ -822,7 +821,7 @@ public class RestDataConnector extends AbstractDataConnector {
 				
 				if (organization == null) {
 					log.debug("Didn't find any organization.");
-					if (StringUtils.isNumeric(rawSchool)) {
+					if (isNumeric(rawSchool)) {
 						populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);
 						populateStructuredRole(attributes, "", rawSchool, ecaUser.getRoles()[i]);
 					} else {
@@ -835,7 +834,7 @@ public class RestDataConnector extends AbstractDataConnector {
 						school = findSchool(organization.getParentOid(), nameApiBaseUrl);
 						if (school == null) {
 							log.debug("Didn't find any school.");
-							if (StringUtils.isNumeric(rawSchool)) {
+							if (isNumeric(rawSchool)) {
 								populateAttribute(attributes, ATTR_ID_SCHOOL_IDS, rawSchool);
 								populateStructuredRole(attributes, "", rawSchool, ecaUser.getRoles()[i]);
 							} else {
@@ -1264,19 +1263,20 @@ public class RestDataConnector extends AbstractDataConnector {
 		log.debug("TrimmedSchool: {}", trimmedSchoolId);
 		
 		if (trimmedSchoolId == null || 
-				(StringUtils.isNumeric(trimmedSchoolId) && trimmedSchoolId.length() > 6) ||
-				(!StringUtils.isNumeric(trimmedSchoolId) && !trimmedSchoolId.contains("."))) {
+				(isNumeric(trimmedSchoolId) && trimmedSchoolId.length() > 6) ||
+				(!isNumeric(trimmedSchoolId) && !trimmedSchoolId.contains("."))) {
 			return null;
 		}
-		final HttpResponse response;
+		final HttpContext context = HttpClientContext.create();
+		final ClassicHttpResponse response;
 		try {
-			final HttpUriRequest get = RequestBuilder.get().setUri(baseUrl + trimmedSchoolId).build();
+			final ClassicHttpRequest get = ClassicRequestBuilder.get().setUri(baseUrl + trimmedSchoolId).build();
 
 			if (nameApiCallerId != null) {
 				get.setHeader(HEADER_NAME_CALLER_ID, nameApiCallerId);
 			}
 
-			response = buildClient().execute(get);
+			response = buildClient().executeOpen(null,get,context);
 		} catch (Exception e) {
 			log.error("Could not get school information with id {}", schoolId, e);
 			return null;
@@ -1470,5 +1470,14 @@ public class RestDataConnector extends AbstractDataConnector {
 
 	public Map<String, Map<String, String>> getStaticValues() {
 		return staticValues;
+	}
+
+	private boolean isNumeric(String value) {		
+		try {
+			Integer.parseInt(value);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}		
 	}
 }

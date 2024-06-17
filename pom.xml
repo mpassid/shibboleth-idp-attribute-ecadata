@@ -26,26 +26,25 @@ THE SOFTWARE.
     <parent>
         <groupId>net.shibboleth.idp</groupId>
         <artifactId>idp-parent</artifactId>
-        <version>4.2.1</version>
+        <version>5.0.0</version>
     </parent>
     
     <groupId>fi.mpass</groupId>
-    <version>1.4</version>
+    <version>1.5</version>
     <packaging>jar</packaging>
     <artifactId>idp-attribute-impl-ecadata</artifactId>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <shib.idp.version>4.2.1</shib.idp.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <shib.idp.version>5.0.0</shib.idp.version>
         <commons-io.version>2.7</commons-io.version>
         <gson.version>2.9.0</gson.version>
         <simpleframework.version>6.0.1</simpleframework.version>
         <checkstyle.configLocation>mpassid-checkstyle.xml</checkstyle.configLocation>
         <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
-        <automatic.module.name>fi.mpass.shibboleth.attribute.dc.rest</automatic.module.name>
-        <fi.csc.shibboleth.shibsp>1.0.0</fi.csc.shibboleth.shibsp>
+        <automatic.module.name>fi.mpass.shibboleth.attribute.dc.rest</automatic.module.name>        
     </properties>
 
     <repositories>
@@ -83,18 +82,18 @@ THE SOFTWARE.
     <dependencies>
         <!-- Compile Dependencies -->
         <dependency>
-            <groupId>net.shibboleth.idp</groupId>
-            <artifactId>idp-attribute-api</artifactId>
+            <groupId>net.shibboleth</groupId>
+            <artifactId>shib-attribute-api</artifactId>
             <version>${shib.idp.version}</version>
         </dependency>
         <dependency>
-            <groupId>net.shibboleth.idp</groupId>
-            <artifactId>idp-attribute-resolver-api</artifactId>
+            <groupId>net.shibboleth</groupId>
+            <artifactId>shib-attribute-resolver-api</artifactId>
             <version>${shib.idp.version}</version>
         </dependency>
         <dependency>
-            <groupId>net.shibboleth.idp</groupId>
-            <artifactId>idp-attribute-resolver-spring</artifactId>
+            <groupId>net.shibboleth</groupId>
+            <artifactId>shib-attribute-resolver-spring</artifactId>
             <version>${shib.idp.version}</version>
         </dependency>
         <dependency>
@@ -110,11 +109,6 @@ THE SOFTWARE.
 
         <dependency>
             <groupId>${opensaml.groupId}</groupId>
-            <artifactId>opensaml-core</artifactId>
-            <version>${opensaml.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${opensaml.groupId}</groupId>
             <artifactId>opensaml-profile-api</artifactId>
             <version>${opensaml.version}</version>
         </dependency>
@@ -123,16 +117,13 @@ THE SOFTWARE.
             <artifactId>opensaml-soap-api</artifactId>
             <version>${opensaml.version}</version>
         </dependency>
-        <dependency>
-            <groupId>fi.csc.shibboleth</groupId>
-            <artifactId>idp-authn-api-shibsp</artifactId>
-            <version>${fi.csc.shibboleth.shibsp}</version>
-        </dependency>
+        
         
 
         <dependency>
             <groupId>net.shibboleth.ext</groupId>
             <artifactId>spring-extensions</artifactId>
+            <version>${shib.idp.version}</version>
         </dependency>
 
         <dependency>
@@ -153,22 +144,26 @@ THE SOFTWARE.
             <artifactId>commons-io</artifactId>
             <version>${commons-io.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <!-- Provided Dependencies -->
 
         <!-- Runtime Dependencies -->
 
         <!-- Test Dependencies -->
         <dependency>
-            <groupId>net.shibboleth.idp</groupId>
-            <artifactId>idp-attribute-resolver-impl</artifactId>
+            <groupId>net.shibboleth</groupId>
+            <artifactId>shib-attribute-resolver-impl</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
             <version>${shib.idp.version}</version>
         </dependency>
         <dependency>
-            <groupId>net.shibboleth.idp</groupId>
-            <artifactId>idp-attribute-resolver-spring</artifactId>
+            <groupId>net.shibboleth</groupId>
+            <artifactId>shib-attribute-resolver-spring</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
             <version>${shib.idp.version}</version>
@@ -189,9 +184,15 @@ THE SOFTWARE.
         </dependency>
 
         <dependency>
+			<groupId>net.shibboleth.idp</groupId>
+			<artifactId>idp-testing</artifactId>
+			<version>${shib.idp.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+        <dependency>
             <groupId>${opensaml.groupId}</groupId>
-            <artifactId>opensaml-core</artifactId>
-            <type>test-jar</type>
+            <artifactId>opensaml-testing</artifactId>
             <scope>test</scope>
             <version>${opensaml.version}</version>
         </dependency>

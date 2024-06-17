@@ -27,8 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -->
 
-    <import namespace="urn:mace:shibboleth:2.0:resolver"
-            schemaLocation="classpath:/schema/shibboleth-2.0-attribute-resolver.xsd" />
+    <import namespace="urn:mace:shibboleth:2.0:resolver" schemaLocation="http://shibboleth.net/schema/idp/shibboleth-attribute-resolver.xsd"/>
 
     <complexType name="RestDataConnector">
         <annotation>

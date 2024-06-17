@@ -23,7 +23,7 @@
 
 package fi.mpass.shibboleth.attribute.resolver.spring.dc;
 
-import net.shibboleth.ext.spring.util.BaseSpringNamespaceHandler;
+import net.shibboleth.shared.spring.custom.BaseSpringNamespaceHandler;
 
 /**
  * Namespace handler for ECA Auth Data API data connector.
