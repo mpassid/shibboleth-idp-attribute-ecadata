@@ -30,7 +30,7 @@ THE SOFTWARE.
     </parent>
     
     <groupId>fi.mpass</groupId>
-    <version>1.5-rc5</version>
+    <version>1.5</version>
     <packaging>jar</packaging>
     <artifactId>idp-attribute-impl-ecadata</artifactId>
 
